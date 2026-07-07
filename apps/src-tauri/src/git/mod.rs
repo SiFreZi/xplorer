@@ -1,3 +1,4 @@
+pub(crate) mod command;
 mod parsing;
 pub(crate) mod service;
 pub mod types;
