@@ -1,5 +1,6 @@
 use tauri::command;
 
+use super::command::GitCommand;
 use super::types::GitRemote;
 use super::validation::validate_git_path;
 
@@ -7,7 +8,7 @@ use super::validation::validate_git_path;
 pub async fn git_pull(directory: String) -> Result<String, String> {
     validate_git_path(&directory, "Directory")?;
     tokio::task::spawn_blocking(move || {
-        let output = std::process::Command::new("git")
+        let output = GitCommand::new("git")
             .args(["pull"])
             .current_dir(&directory)
             .output()
@@ -33,7 +34,7 @@ pub async fn git_push(directory: String, force: Option<bool>) -> Result<String, 
             args.push("--force");
         }
 
-        let output = std::process::Command::new("git")
+        let output = GitCommand::new("git")
             .args(&args)
             .current_dir(&directory)
             .output()
@@ -54,7 +55,7 @@ pub async fn git_push(directory: String, force: Option<bool>) -> Result<String, 
 pub async fn git_fetch(directory: String) -> Result<String, String> {
     validate_git_path(&directory, "Directory")?;
     tokio::task::spawn_blocking(move || {
-        let output = std::process::Command::new("git")
+        let output = GitCommand::new("git")
             .args(["fetch", "--all"])
             .current_dir(&directory)
             .output()
@@ -75,7 +76,7 @@ pub async fn git_fetch(directory: String) -> Result<String, String> {
 pub async fn git_get_remotes(directory: String) -> Result<Vec<GitRemote>, String> {
     validate_git_path(&directory, "Directory")?;
     tokio::task::spawn_blocking(move || {
-        let output = std::process::Command::new("git")
+        let output = GitCommand::new("git")
             .args(["remote", "-v"])
             .current_dir(&directory)
             .output()

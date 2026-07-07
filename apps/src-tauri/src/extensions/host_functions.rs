@@ -691,7 +691,7 @@ fn do_git_exec(
     }
 
     // Execute git with sanitized arguments
-    let output = std::process::Command::new("git")
+    let output = crate::git::command::GitCommand::new("git")
         .args(&args)
         .current_dir(repo_path)
         // Do not inherit env vars that could affect git behavior

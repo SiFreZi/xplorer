@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
+use super::command::GitCommand as Command;
 use super::parsing;
 use super::types::*;
 use super::validation::{validate_git_path, validate_git_ref};
