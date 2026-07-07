@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileEntry } from '@/lib/tauri-api';
 import { STORAGE_KEYS } from '@/lib/storage-keys';
+import { getDefaultViewMode, getExplicitDefaultViewMode } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ const detectOptimalView = (files: FileEntry[], _currentPath: string): ViewMode =
 
 export const useSmartView = (files: FileEntry[], currentPath: string): SmartViewResult => {
   const [isAutoDetected, setIsAutoDetected] = useState(false);
-  const [suggestedView, setSuggestedView] = useState<ViewMode>('medium');
+  const [suggestedView, setSuggestedView] = useState<ViewMode>(() => getDefaultViewMode());
 
   // Track whether user has manually set a view for the current path this session
   const userOverrodeRef = useRef(false);
@@ -123,7 +124,7 @@ export const useSmartView = (files: FileEntry[], currentPath: string): SmartView
     // Skip auto-detection for special pages
     if (currentPath.startsWith('xplorer://') || currentPath.startsWith('gdrive://')) {
       setIsAutoDetected(false);
-      setSuggestedView('medium');
+      setSuggestedView(getDefaultViewMode());
       return;
     }
 
@@ -135,7 +136,16 @@ export const useSmartView = (files: FileEntry[], currentPath: string): SmartView
       return;
     }
 
-    // Priority 2: Auto-detect based on contents (only when files are loaded)
+    // Priority 2: Explicit global default from settings (list/details) takes
+    // precedence over content-based auto-detection.
+    const explicitDefault = getExplicitDefaultViewMode();
+    if (explicitDefault && !userOverrodeRef.current) {
+      setSuggestedView(explicitDefault);
+      setIsAutoDetected(false);
+      return;
+    }
+
+    // Priority 3: Auto-detect based on contents (only when files are loaded)
     if (files.length > 0 && !userOverrodeRef.current) {
       const detected = detectOptimalView(files, currentPath);
       setSuggestedView(detected);
@@ -143,9 +153,9 @@ export const useSmartView = (files: FileEntry[], currentPath: string): SmartView
       return;
     }
 
-    // Priority 3: Global default
+    // Priority 4: Global default fallback
     if (!userOverrodeRef.current) {
-      setSuggestedView('medium');
+      setSuggestedView(getDefaultViewMode());
       setIsAutoDetected(false);
     }
   }, [currentPath, files]);
@@ -163,13 +173,17 @@ export const useSmartView = (files: FileEntry[], currentPath: string): SmartView
   const clearSavedView = useCallback(() => {
     removeSavedViewMode(currentPath);
     userOverrodeRef.current = false;
-    // Re-detect
-    if (files.length > 0) {
+    // An explicit default from settings wins over re-detection.
+    const explicitDefault = getExplicitDefaultViewMode();
+    if (explicitDefault) {
+      setSuggestedView(explicitDefault);
+      setIsAutoDetected(false);
+    } else if (files.length > 0) {
       const detected = detectOptimalView(files, currentPath);
       setSuggestedView(detected);
       setIsAutoDetected(true);
     } else {
-      setSuggestedView('medium');
+      setSuggestedView(getDefaultViewMode());
       setIsAutoDetected(false);
     }
   }, [currentPath, files]);

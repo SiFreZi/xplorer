@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { STORAGE_KEYS } from '@/lib/storage-keys';
-import type { SortField } from '@/lib/utils';
+import { getDefaultViewMode, type SortField } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,6 @@ interface FolderViewSettingsResult {
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
-const DEFAULT_VIEW_MODE = 'medium';
 const DEFAULT_SORT_BY: SortField = 'name';
 const DEFAULT_SORT_ORDER: 'asc' | 'desc' = 'asc';
 const DEFAULT_GROUP_BY_DATE = false;
@@ -101,7 +100,7 @@ export const useFolderViewSettings = (
       const isDateFolder = isDateGroupedFolder(path);
 
       return {
-        viewMode: saved?.viewMode ?? globalViewMode ?? DEFAULT_VIEW_MODE,
+        viewMode: saved?.viewMode ?? globalViewMode ?? getDefaultViewMode(),
         sortBy: saved?.sortBy ?? (isDateFolder ? 'dateModified' : DEFAULT_SORT_BY),
         sortOrder: saved?.sortOrder ?? (isDateFolder ? 'desc' : DEFAULT_SORT_ORDER),
         groupByDate: saved?.groupByDate ?? (isDateFolder ? true : DEFAULT_GROUP_BY_DATE),

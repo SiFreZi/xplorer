@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { STORAGE_KEYS } from '@/lib/storage-keys';
-import type { SortField } from '@/lib/utils';
+import { getDefaultViewMode, type SortField } from '@/lib/utils';
 
 // ── Helpers for persisting UI state to localStorage ──────────────────────────
 const UI_STATE_KEY = STORAGE_KEYS.UI_STATE;
@@ -135,7 +135,9 @@ export const useLayoutState = (): LayoutState => {
   }, []);
 
   // View mode
-  const [viewMode, setViewMode] = useState<string>(() => loadUiState('viewMode', 'medium'));
+  const [viewMode, setViewMode] = useState<string>(() =>
+    loadUiState('viewMode', getDefaultViewMode()),
+  );
 
   // Sorting
   const [sortBy, setSortBy] = useState<SortField>(() => loadUiState<SortField>('sortBy', 'name'));

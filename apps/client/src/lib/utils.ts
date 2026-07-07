@@ -576,6 +576,34 @@ export const viewModes = {
   column: { id: 'column', name: 'Column View', icon: cfgIcon(Columns) },
 };
 
+/**
+ * Reads the user's `defaultView` setting from localStorage and maps it to an
+ * internal viewMode id. The settings UI exposes `grid` / `list` / `details`,
+ * whereas the explorer uses ids like `medium` / `list` / `details`.
+ *
+ * Returns null when the setting is unset or left at the built-in `grid`
+ * default, so callers can fall back to content-based auto-detection.
+ */
+export const getExplicitDefaultViewMode = (): string | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed === 'object' && parsed !== null) {
+        const dv = (parsed as { defaultView?: unknown }).defaultView;
+        if (dv === 'list') return 'list';
+        if (dv === 'details') return 'details';
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read defaultView setting:', e);
+  }
+  return null;
+};
+
+/** Concrete default view mode: the user's explicit choice or `medium`. */
+export const getDefaultViewMode = (): string => getExplicitDefaultViewMode() ?? 'medium';
+
 // Font size utility functions
 export const applyFontSize = (size: 'small' | 'medium' | 'large' | 'xl') => {
   const root = document.documentElement;
