@@ -24,6 +24,7 @@ const ColumnFileRow = React.memo(
     onClick,
     onDoubleClick,
     onRightClick,
+    onMiddleClick,
   }: {
     file: FileEntry;
     isActive: boolean;
@@ -34,6 +35,7 @@ const ColumnFileRow = React.memo(
     onClick: (e: React.MouseEvent) => void;
     onDoubleClick: () => void;
     onRightClick: (e: React.MouseEvent) => void;
+    onMiddleClick: (e: React.MouseEvent) => void;
   }) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
@@ -43,12 +45,18 @@ const ColumnFileRow = React.memo(
         aria-selected={isActive || isSelected}
         tabIndex={0}
         data-file-path={file.path}
-        onMouseDown={dragHandlers.onMouseDown}
+        onMouseDown={(e) => {
+          // Middle-click on Windows triggers autoscroll; suppress it here so the
+          // auxclick handler can open the folder in a new tab cleanly.
+          if (e.button === 1) e.preventDefault();
+          dragHandlers.onMouseDown(e);
+        }}
         onMouseMove={dragHandlers.onMouseMove}
         onMouseUp={dragHandlers.onMouseUp}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         onContextMenu={onRightClick}
+        onAuxClick={onMiddleClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter') onDoubleClick();
         }}
@@ -58,7 +66,7 @@ const ColumnFileRow = React.memo(
           gap: '8px',
           padding: '4px 12px',
           cursor: 'pointer',
-          fontSize: '13px',
+          fontSize: 'var(--xp-entry-font-size)',
           userSelect: 'none',
           color: 'var(--xp-text)',
           backgroundColor: (() => {
@@ -142,6 +150,7 @@ const VirtualizedColumnPane = ({
   handleColumnFileClick,
   handleFileDoubleClick,
   handleFileRightClick,
+  handleFileMiddleClick,
 }: {
   column: ColumnData;
   colIndex: number;
@@ -150,6 +159,7 @@ const VirtualizedColumnPane = ({
   handleColumnFileClick: (file: FileEntry, colIndex: number, e: React.MouseEvent) => void;
   handleFileDoubleClick: (file: FileEntry) => void;
   handleFileRightClick: (file: FileEntry, e: React.MouseEvent) => void;
+  handleFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
 }) => {
   const columnScrollRef = useRef<HTMLDivElement>(null);
   const needsVirtualization = column.files.length >= COLUMN_VIRTUALIZATION_THRESHOLD;
@@ -188,6 +198,7 @@ const VirtualizedColumnPane = ({
             onClick={(e) => handleColumnFileClick(file, colIndex, e)}
             onDoubleClick={() => handleFileDoubleClick(file)}
             onRightClick={(e) => handleFileRightClick(file, e)}
+            onMiddleClick={(e) => handleFileMiddleClick(file, e)}
           />
         ))}
         {column.files.length === 0 && (
@@ -250,6 +261,7 @@ const VirtualizedColumnPane = ({
                 onClick={(e) => handleColumnFileClick(file, colIndex, e)}
                 onDoubleClick={() => handleFileDoubleClick(file)}
                 onRightClick={(e) => handleFileRightClick(file, e)}
+                onMiddleClick={(e) => handleFileMiddleClick(file, e)}
               />
             </div>
           );
@@ -267,6 +279,7 @@ const ColumnView = ({
   handleFileDoubleClick,
   handleFileRightClick,
   handleBackgroundRightClick,
+  openInNewTab,
   getFileIcon,
   formatFileSize,
   formatDate,
@@ -326,6 +339,18 @@ const ColumnView = ({
     [handleFileClick],
   );
 
+  const handleFileMiddleClick = useCallback(
+    (file: FileEntry, event: React.MouseEvent) => {
+      if (event.button !== 1) return;
+      // Prevent the pane-level middle-click handler from also firing (it only
+      // knows about the current directory's files, not deeper column levels).
+      event.preventDefault();
+      event.stopPropagation();
+      if (file.is_dir) openInNewTab?.(file);
+    },
+    [openInNewTab],
+  );
+
   const getExtension = (name: string): string | null => {
     const dotIndex = name.lastIndexOf('.');
     if (dotIndex > 0 && dotIndex < name.length - 1) {
@@ -363,6 +388,7 @@ const ColumnView = ({
           handleColumnFileClick={handleColumnFileClick}
           handleFileDoubleClick={handleFileDoubleClick}
           handleFileRightClick={handleFileRightClick}
+          handleFileMiddleClick={handleFileMiddleClick}
         />
       ))}
 

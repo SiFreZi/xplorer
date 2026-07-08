@@ -39,6 +39,7 @@ interface PaneFileExplorerProps {
   handleDelete: () => void;
   handleFileClick: (file: FileEntry, event: React.MouseEvent) => void;
   handleFileDoubleClick: (file: FileEntry) => void;
+  openInNewTab: (file: FileEntry) => void;
   onFileRightClick: (file: FileEntry, event: React.MouseEvent) => void;
   onBgRightClick: (event: React.MouseEvent) => void;
   getFolderSize: (path: string) => import('@/lib/tauri-api').FolderSizeInfo | null;
@@ -81,6 +82,7 @@ const PaneFileExplorer = React.memo(
     handleDelete,
     handleFileClick,
     handleFileDoubleClick,
+    openInNewTab,
     onFileRightClick,
     onBgRightClick,
     getFolderSize,
@@ -258,6 +260,7 @@ const PaneFileExplorer = React.memo(
             handleFileDoubleClick={handleFileDoubleClick}
             handleFileRightClick={onFileRightClick}
             handleBackgroundRightClick={onBgRightClick}
+            openInNewTab={openInNewTab}
             getFolderSize={getFolderSize}
             isCalculatingSize={isCalculatingSize}
             calculateFolderSize={calculateFolderSize}

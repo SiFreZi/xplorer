@@ -199,6 +199,50 @@ describe('useSplitLayout', () => {
       expect(result.current.activeGroup.tabs[1].name).toBe('Documents');
     });
 
+    it('reuses an existing tab when the same folder path is opened again', () => {
+      const { result } = renderHook(() => useSplitLayout());
+      const groupId = result.current.state.activeGroupId;
+
+      act(() => {
+        result.current.addTab(groupId, {
+          id: 'tab-docs-1',
+          name: 'Documents',
+          path: 'C:\\Documents',
+          type: 'folder',
+        });
+      });
+      expect(result.current.activeGroup.tabs).toHaveLength(2);
+
+      act(() => {
+        result.current.addTab(groupId, {
+          id: 'tab-docs-2',
+          name: 'Documents',
+          path: 'C:\\Documents',
+          type: 'folder',
+        });
+      });
+
+      // No duplicate created; the existing tab is reused and activated.
+      expect(result.current.activeGroup.tabs).toHaveLength(2);
+      expect(result.current.activeGroup.activeTabId).toBe('tab-docs-1');
+    });
+
+    it('allows multiple Home tabs (exempt from path dedupe)', () => {
+      const { result } = renderHook(() => useSplitLayout());
+      const groupId = result.current.state.activeGroupId;
+
+      act(() => {
+        result.current.addTab(groupId, {
+          id: 'home-2',
+          name: 'Home',
+          path: 'xplorer://home',
+          type: 'folder',
+        });
+      });
+
+      expect(result.current.activeGroup.tabs).toHaveLength(2);
+    });
+
     it('switches to an existing tab', () => {
       const { result } = renderHook(() => useSplitLayout());
       const groupId = result.current.state.activeGroupId;

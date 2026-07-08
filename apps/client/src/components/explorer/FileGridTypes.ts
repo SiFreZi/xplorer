@@ -14,6 +14,8 @@ export interface ViewComponentProps {
   handleFileDoubleClick: (file: FileEntry) => void;
   handleFileRightClick: (file: FileEntry, event: React.MouseEvent) => void;
   handleBackgroundRightClick?: (event: React.MouseEvent) => void;
+  /** Open a folder in a new tab (used by middle-click). */
+  openInNewTab?: (file: FileEntry) => void;
   getFolderSize: (path: string) => FolderSizeInfo | null;
   isCalculatingSize: (path: string) => boolean;
   calculateFolderSize?: (path: string) => void;

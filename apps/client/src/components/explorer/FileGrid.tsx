@@ -38,6 +38,7 @@ interface FileGridProps {
   handleFileDoubleClick: (file: FileEntry) => void;
   handleFileRightClick: (file: FileEntry, event: React.MouseEvent) => void;
   handleBackgroundRightClick?: (event: React.MouseEvent) => void;
+  openInNewTab?: (file: FileEntry) => void;
   getFolderSize: (path: string) => FolderSizeInfo | null;
   isCalculatingSize: (path: string) => boolean;
   calculateFolderSize?: (path: string) => void;
@@ -70,6 +71,7 @@ const FileGrid = ({
   handleFileDoubleClick,
   handleFileRightClick,
   handleBackgroundRightClick,
+  openInNewTab,
   getFolderSize,
   isCalculatingSize,
   calculateFolderSize,
@@ -542,6 +544,7 @@ const FileGrid = ({
     handleFileDoubleClick,
     handleFileRightClick,
     handleBackgroundRightClick,
+    openInNewTab,
     getFolderSize,
     isCalculatingSize,
     calculateFolderSize,
