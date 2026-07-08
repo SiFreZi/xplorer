@@ -9,6 +9,8 @@ interface SidebarBookmarksProps {
   currentPath: string;
   navigateToPath: (path: string) => void;
   handleFileRightClick?: (file: FileEntry, event: React.MouseEvent) => void;
+  /** Open a favorite in a new tab (used by middle-click). */
+  openInNewTab?: (file: FileEntry) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   sectionHeight: number | undefined;
@@ -18,6 +20,7 @@ interface SidebarBookmarksProps {
 const SidebarBookmarks = ({
   navigateToPath,
   handleFileRightClick,
+  openInNewTab,
   collapsed,
   onToggleCollapsed,
   sectionHeight,
@@ -51,6 +54,16 @@ const SidebarBookmarks = ({
       console.error('Failed to remove bookmark:', error);
     }
   };
+
+  const bookmarkToFile = (bookmark: BookmarkEntry): FileEntry => ({
+    name: bookmark.name,
+    path: bookmark.path,
+    size: 0,
+    modified: 0,
+    is_dir: bookmark.is_dir,
+    file_type: bookmark.is_dir ? 'folder' : bookmark.name.split('.').pop() || '',
+    is_readonly: false,
+  });
 
   return (
     <div
@@ -86,22 +99,21 @@ const SidebarBookmarks = ({
                   key={bookmark.path}
                   className="hover:bg-xp-surface-light group flex w-full cursor-pointer items-center rounded px-2 py-1 text-xs transition-colors"
                   onClick={() => navigateToPath(bookmark.path)}
+                  onMouseDown={(e) => {
+                    // Prevent middle-click autoscroll; opening happens on auxclick.
+                    if (e.button === 1) e.preventDefault();
+                  }}
+                  onAuxClick={(e) => {
+                    if (e.button === 1 && openInNewTab) {
+                      e.preventDefault();
+                      openInNewTab(bookmarkToFile(bookmark));
+                    }
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (handleFileRightClick) {
-                      const syntheticFile: FileEntry = {
-                        name: bookmark.name,
-                        path: bookmark.path,
-                        size: 0,
-                        modified: 0,
-                        is_dir: bookmark.is_dir,
-                        file_type: bookmark.is_dir
-                          ? 'folder'
-                          : bookmark.name.split('.').pop() || '',
-                        is_readonly: false,
-                      };
-                      handleFileRightClick(syntheticFile, e);
+                      handleFileRightClick(bookmarkToFile(bookmark), e);
                     }
                   }}
                   title={bookmark.path}

@@ -31,6 +31,7 @@ interface LeftSidebarProps {
   handleFileClick: (file: FileEntry) => void;
   handleFileRightClick?: (file: FileEntry, event: React.MouseEvent) => void;
   handleFileOpen?: (file: FileEntry) => void;
+  openInNewTab?: (file: FileEntry) => void;
   getFileIcon: (file: FileEntry) => React.ReactNode;
   width?: number;
   searchPanelOpen?: boolean;
@@ -50,6 +51,7 @@ const LeftSidebar = forwardRef<LeftSidebarHandle, LeftSidebarProps>(function Lef
     handleFileClick,
     handleFileRightClick,
     handleFileOpen,
+    openInNewTab,
     getFileIcon,
     width,
     searchPanelOpen = false,
@@ -183,6 +185,7 @@ const LeftSidebar = forwardRef<LeftSidebarHandle, LeftSidebarProps>(function Lef
             currentPath={currentPath}
             navigateToPath={navigateToPath}
             handleFileRightClick={handleFileRightClick}
+            openInNewTab={openInNewTab}
             collapsed={sectionCollapsed.favorites}
             onToggleCollapsed={() => toggleSection('favorites')}
             sectionHeight={sectionHeights.favorites}
