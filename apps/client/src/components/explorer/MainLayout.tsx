@@ -525,6 +525,7 @@ const MainLayout = (props: MainLayoutProps) => {
                   handleFileClick={handleFileClick}
                   handleFileRightClick={ctxMenu.handleFileRightClick}
                   handleFileOpen={handleFileDoubleClick}
+                  openInNewTab={sharedActions.openInNewTab}
                   getFileIcon={getFileIcon}
                   searchPanelOpen={searchPanelOpen}
                   onToggleSearchPanel={() => setSearchPanelOpen((prev) => !prev)}
