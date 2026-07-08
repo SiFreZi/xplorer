@@ -13,32 +13,36 @@
 .bg-xp-popover {
   background-color: var(--xp-popover);
 }
+/* Accent background utilities are opacity-aware: Tailwind's `bg-opacity-*`
+   modifier sets `--tw-bg-opacity`, so combining e.g. `bg-xp-green bg-opacity-20`
+   yields a subtle tint instead of a solid fill (which would hide same-colored
+   text). Without `bg-opacity-*`, `--tw-bg-opacity` defaults to 1 = solid color. */
 .bg-xp-blue {
-  background-color: var(--xp-blue);
+  background-color: color-mix(in srgb, var(--xp-blue) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-blue-dark {
-  background-color: var(--xp-blue-dark);
+  background-color: color-mix(in srgb, var(--xp-blue-dark) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-purple {
-  background-color: var(--xp-purple);
+  background-color: color-mix(in srgb, var(--xp-purple) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-green {
-  background-color: var(--xp-green);
+  background-color: color-mix(in srgb, var(--xp-green) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-red {
-  background-color: var(--xp-red);
+  background-color: color-mix(in srgb, var(--xp-red) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-orange {
-  background-color: var(--xp-orange);
+  background-color: color-mix(in srgb, var(--xp-orange) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-pink {
-  background-color: var(--xp-pink);
+  background-color: color-mix(in srgb, var(--xp-pink) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-cyan {
-  background-color: var(--xp-cyan);
+  background-color: color-mix(in srgb, var(--xp-cyan) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 .bg-xp-yellow {
-  background-color: var(--xp-yellow);
+  background-color: color-mix(in srgb, var(--xp-yellow) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
 
 .text-xp-text {
