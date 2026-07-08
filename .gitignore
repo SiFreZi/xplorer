@@ -5,6 +5,11 @@ vite.config.ts.*
 *.tar.gz
 target
 
+# Built desktop binary copied to repo root by build-exe.bat / scripts/build-exe.ps1
+/xplorer.exe
+# Portable MSVC toolchain installer (dropped in root for local builds)
+/PortableBuildTools.exe
+
 # Environment and secrets
 .env
 .env.*

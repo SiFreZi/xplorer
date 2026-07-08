@@ -256,6 +256,7 @@ export interface AppSettings {
   highContrast: boolean;
   autoCalculateFolderSizes: boolean;
   rememberViewPerFolder: boolean;
+  detailsRowDensity: 'compact' | 'normal' | 'comfortable';
   aiSearchProvider: string;
   aiSearchModel: string;
   aiSearchApiKey: string;
@@ -283,6 +284,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   highContrast: false,
   autoCalculateFolderSizes: false,
   rememberViewPerFolder: false,
+  detailsRowDensity: 'normal',
   aiSearchProvider: 'auto',
   aiSearchModel: '',
   aiSearchApiKey: '',

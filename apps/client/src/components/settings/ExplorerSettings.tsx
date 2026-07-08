@@ -16,6 +16,12 @@ const ExplorerSettings = ({ settings, updateSetting }: ExplorerSettingsProps) =>
     { value: 'details', label: t('settings.explorer.details') },
   ];
 
+  const rowDensities = [
+    { value: 'compact', label: t('settings.explorer.rowDensityCompact') },
+    { value: 'normal', label: t('settings.explorer.rowDensityNormal') },
+    { value: 'comfortable', label: t('settings.explorer.rowDensityComfortable') },
+  ];
+
   return (
     <div className="space-y-1">
       <SectionTitle title={t('settings.explorer.display')} />
@@ -65,6 +71,19 @@ const ExplorerSettings = ({ settings, updateSetting }: ExplorerSettingsProps) =>
           label={t('settings.explorer.autoFolderSizes')}
           checked={settings.autoCalculateFolderSizes}
           onChange={(v) => updateSetting('autoCalculateFolderSizes', v)}
+        />
+      </SettingRow>
+
+      <SettingRow
+        icon={LayoutGrid}
+        label={t('settings.explorer.rowDensity')}
+        description={t('settings.explorer.rowDensityDesc')}
+      >
+        <SelectField
+          label={t('settings.explorer.rowDensity')}
+          value={settings.detailsRowDensity}
+          onChange={(v) => updateSetting('detailsRowDensity', v)}
+          options={rowDensities}
         />
       </SettingRow>
 

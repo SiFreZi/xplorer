@@ -316,6 +316,7 @@ const Settings = () => {
 
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    window.dispatchEvent(new CustomEvent('xplorer:settings-changed'));
   }, [settings]);
 
   useEffect(() => {

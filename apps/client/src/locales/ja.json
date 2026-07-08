@@ -302,6 +302,11 @@
       "fileExtensionsDesc": "ファイル名に拡張子を表示",
       "autoFolderSizes": "フォルダサイズを自動計算",
       "autoFolderSizesDesc": "詳細ビューでフォルダサイズを自動計算して表示",
+      "rowDensity": "行間隔",
+      "rowDensityDesc": "詳細ビューの行の高さを調整",
+      "rowDensityCompact": "コンパクト",
+      "rowDensityNormal": "標準",
+      "rowDensityComfortable": "広め",
       "preview": "プレビュー",
       "markdownPreview": "Markdown プレビュー",
       "markdownPreviewDesc": "Markdown ファイルを生テキストではなくレンダリング表示"

@@ -302,6 +302,11 @@
       "fileExtensionsDesc": "在文件名中显示扩展名",
       "autoFolderSizes": "自动计算文件夹大小",
       "autoFolderSizesDesc": "在详细视图中自动计算并显示文件夹大小",
+      "rowDensity": "行间距",
+      "rowDensityDesc": "调整详细视图中的行高",
+      "rowDensityCompact": "紧凑",
+      "rowDensityNormal": "正常",
+      "rowDensityComfortable": "宽松",
       "preview": "预览",
       "markdownPreview": "Markdown 预览",
       "markdownPreviewDesc": "渲染 Markdown 文件而非显示原始文本"
