@@ -228,11 +228,14 @@ const splitLayoutReducer = (
       const group = state.groups[groupId];
       if (!group) return state;
 
-      const exists = group.tabs.find((t) => t.id === tab.id);
+      const exists = group.tabs.find(
+        (t) => t.id === tab.id || (tab.path !== 'xplorer://home' && t.path === tab.path),
+      );
       if (exists) {
-        // Tab already open — switch to it (save/restore history)
+        // Tab already open (same id, or same folder/file path) — switch to it
+        // instead of duplicating. Home is exempt so "+" can open a fresh tab.
         if (activate !== false) {
-          return splitLayoutReducer(state, { type: 'SWITCH_TAB', groupId, tabId: tab.id });
+          return splitLayoutReducer(state, { type: 'SWITCH_TAB', groupId, tabId: exists.id });
         }
         return state;
       }

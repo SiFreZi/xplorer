@@ -460,7 +460,7 @@ const FileGridItem = React.memo(
         </div>
         <div className={`${isGridView ? 'w-full min-w-0' : 'min-w-0 flex-1'} select-none`}>
           <div
-            className={`text-xp-text font-medium ${isRenaming ? '' : 'overflow-hidden'} ${isListView ? 'text-xs' : 'text-sm'} ${isGridView ? 'justify-center' : ''} flex items-center`}
+            className={`text-xp-text font-medium ${isRenaming ? '' : 'overflow-hidden'} ${isListView ? 'file-entry-name' : 'text-sm'} ${isGridView ? 'justify-center' : ''} flex items-center`}
             style={isRenaming ? { position: 'relative', overflow: 'visible' } : undefined}
           >
             {renderNameArea()}

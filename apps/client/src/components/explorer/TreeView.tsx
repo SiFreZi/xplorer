@@ -97,7 +97,7 @@ const TreeItemRow = React.memo(
           {!file.is_dir && <div className="w-4 flex-shrink-0" />}
 
           <span className="mr-2 flex-shrink-0 text-sm">{getFileIcon(file)}</span>
-          <span className="flex-1 truncate text-sm">{file.name}</span>
+          <span className="file-entry-name flex-1 truncate">{file.name}</span>
         </div>
       </div>
     );

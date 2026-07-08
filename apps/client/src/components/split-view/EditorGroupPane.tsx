@@ -606,6 +606,7 @@ const EditorGroupPane = ({
         handleDelete={() => handleDelete(selectedFiles, refetch)}
         handleFileClick={handleFileClick}
         handleFileDoubleClick={handleFileDoubleClick}
+        openInNewTab={openInNewTab}
         onFileRightClick={onFileRightClick}
         onBgRightClick={onBgRightClick}
         getFolderSize={getFolderSize}

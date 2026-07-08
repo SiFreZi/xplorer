@@ -212,6 +212,19 @@ html.font-xl {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   FILE / FOLDER ENTRY NAME SIZE
+   Single source of truth for the file/folder name font size across all
+   list-style views (tree, list, details, column). Change the variable
+   to scale them all at once.
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --xp-entry-font-size: 0.75rem;
+}
+.file-entry-name {
+  font-size: var(--xp-entry-font-size);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    REDUCED MOTION
    Collapses all animations/transitions for motion-sensitive users.
    ═══════════════════════════════════════════════════════════════════ */

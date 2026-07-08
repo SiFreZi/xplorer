@@ -127,7 +127,7 @@ const FileRow = React.memo(
           <span className={iconSizeClass}>{getFileIcon(file)}</span>
         </div>
         <div className="col-span-5 min-w-0">
-          <div className="truncate font-medium">{file.name}</div>
+          <div className="file-entry-name truncate font-medium">{file.name}</div>
         </div>
         <div className="text-xp-text-muted col-span-2 text-right text-xs">
           {(() => {
