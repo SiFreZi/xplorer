@@ -170,7 +170,7 @@
     "copyPath": "パスをコピー",
     "copyName": "名前をコピー",
     "versionHistory": "バージョン履歴",
-    "addToBookmarks": "ブックマークに追加",
+    "addToBookmarks": "お気に入りに追加",
     "editMetadata": "メタデータを編集...",
     "setFolderColor": "フォルダの色を設定",
     "removeColor": "色を削除",
@@ -197,7 +197,7 @@
     "selectBy": "条件で選択...",
     "openRecycleBin": "ごみ箱を開く",
     "bookmarkFolder": "このフォルダをブックマーク",
-    "pinToSidebar": "サイドバーにピン留め",
+    "pinToSidebar": "お気に入りに追加",
     "lockFile": "ファイルをロック",
     "unlockFile": "ファイルのロックを解除"
   },

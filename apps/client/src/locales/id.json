@@ -170,7 +170,7 @@
     "copyPath": "Salin Path",
     "copyName": "Salin Nama",
     "versionHistory": "Riwayat Versi",
-    "addToBookmarks": "Tambah ke Bookmark",
+    "addToBookmarks": "Tambah ke Favorit",
     "editMetadata": "Edit Metadata...",
     "setFolderColor": "Atur Warna Folder",
     "removeColor": "Hapus Warna",
@@ -197,7 +197,7 @@
     "selectBy": "Pilih Berdasarkan...",
     "openRecycleBin": "Buka Tempat Sampah",
     "bookmarkFolder": "Bookmark folder ini",
-    "pinToSidebar": "Sematkan ke Sidebar",
+    "pinToSidebar": "Tambah ke Favorit",
     "lockFile": "Kunci File",
     "unlockFile": "Buka Kunci File"
   },

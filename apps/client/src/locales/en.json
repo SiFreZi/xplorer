@@ -170,7 +170,7 @@
     "copyPath": "Copy Path",
     "copyName": "Copy Name",
     "versionHistory": "Version History",
-    "addToBookmarks": "Add to Bookmarks",
+    "addToBookmarks": "Add to Favorites",
     "editMetadata": "Edit Metadata...",
     "setFolderColor": "Set Folder Color",
     "removeColor": "Remove Color",
@@ -197,7 +197,7 @@
     "selectBy": "Select By...",
     "openRecycleBin": "Open Recycle Bin",
     "bookmarkFolder": "Bookmark this folder",
-    "pinToSidebar": "Pin to Sidebar",
+    "pinToSidebar": "Add to Favorites",
     "lockFile": "Lock File",
     "unlockFile": "Unlock File"
   },

@@ -170,7 +170,7 @@
     "copyPath": "复制路径",
     "copyName": "复制名称",
     "versionHistory": "版本历史",
-    "addToBookmarks": "添加到书签",
+    "addToBookmarks": "添加到收藏夹",
     "editMetadata": "编辑元数据...",
     "setFolderColor": "设置文件夹颜色",
     "removeColor": "移除颜色",
@@ -197,7 +197,7 @@
     "selectBy": "按条件选择...",
     "openRecycleBin": "打开回收站",
     "bookmarkFolder": "收藏此文件夹",
-    "pinToSidebar": "固定到侧边栏",
+    "pinToSidebar": "添加到收藏夹",
     "lockFile": "锁定文件",
     "unlockFile": "解锁文件"
   },
