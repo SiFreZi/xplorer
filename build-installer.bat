@@ -23,6 +23,14 @@ cd /d "%~dp0"
 
 if not defined CARGO_BUILD_JOBS set "CARGO_BUILD_JOBS=%NUMBER_OF_PROCESSORS%"
 
+REM --- Increment the app version (patch) before building. --------------------
+call node "%~dp0scripts\bump-version.mjs"
+if errorlevel 1 (
+  echo.
+  echo Version bump FAILED.
+  endlocal & exit /b 1
+)
+
 REM --- Load the MSVC build environment (portable toolchain) if available. -----
 set "DEVCMD=%XPLORER_DEVCMD_BAT%"
 if not defined DEVCMD set "DEVCMD=%USERPROFILE%\BuildTools\devcmd.bat"
