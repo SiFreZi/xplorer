@@ -227,6 +227,34 @@ describe('useSplitLayout', () => {
       expect(result.current.activeGroup.activeTabId).toBe('tab-docs-1');
     });
 
+    it('reuses a tab when the path differs only by separator/case/trailing slash', () => {
+      const { result } = renderHook(() => useSplitLayout());
+      const groupId = result.current.state.activeGroupId;
+
+      act(() => {
+        result.current.addTab(groupId, {
+          id: 'tab-docs-1',
+          name: 'Documents',
+          path: 'C:\\Users\\me\\Documents',
+          type: 'folder',
+        });
+      });
+      expect(result.current.activeGroup.tabs).toHaveLength(2);
+
+      // Same folder opened from favorites: forward slashes, trailing slash, different case.
+      act(() => {
+        result.current.addTab(groupId, {
+          id: 'tab-docs-fav',
+          name: 'Documents',
+          path: 'c:/users/me/documents/',
+          type: 'folder',
+        });
+      });
+
+      expect(result.current.activeGroup.tabs).toHaveLength(2);
+      expect(result.current.activeGroup.activeTabId).toBe('tab-docs-1');
+    });
+
     it('allows multiple Home tabs (exempt from path dedupe)', () => {
       const { result } = renderHook(() => useSplitLayout());
       const groupId = result.current.state.activeGroupId;
