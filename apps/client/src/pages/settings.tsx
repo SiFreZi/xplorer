@@ -43,7 +43,8 @@ import AISettings from '@/components/settings/AISettings';
 import PermissionsSettings from '@/components/settings/PermissionsSettings';
 import AccessibilitySettings from '@/components/settings/AccessibilitySettings';
 import FileAssociationsSettings from '@/components/settings/FileAssociationsSettings';
-import { loadFontSize } from '@/lib/utils';
+import { applyGlobalUiSettings } from '@/lib/utils';
+import { emitAppSettingsChanged } from '@/lib/app-settings';
 import {
   AppSettings,
   DEFAULT_SETTINGS,
@@ -316,16 +317,12 @@ const Settings = () => {
 
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    window.dispatchEvent(new CustomEvent('xplorer:settings-changed'));
+    emitAppSettingsChanged();
   }, [settings]);
 
   useEffect(() => {
-    loadFontSize();
-    if (settings.reducedMotion) document.documentElement.classList.add('reduce-motion');
-    if (settings.enhancedFocus) document.documentElement.classList.add('enhanced-focus');
-    if (settings.highContrast) document.documentElement.classList.add('high-contrast');
-    // Mount-only: apply persisted accessibility settings on init
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Re-assert global DOM settings on mount (already applied at app startup).
+    applyGlobalUiSettings();
   }, []);
 
   const updateSetting = (key: string, value: string | boolean | number) => {

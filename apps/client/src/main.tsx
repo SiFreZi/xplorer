@@ -17,6 +17,22 @@ import * as XplorerSDK from '@xplorer/extension-sdk';
 import { installThemeEventBridge } from './lib/theme-registry';
 installThemeEventBridge();
 
+// Apply persisted font-size + accessibility settings before first paint so the
+// UI is consistent from startup (not only after the Settings page is opened).
+import { applyGlobalUiSettings, adjustRootFontPx } from './lib/utils';
+applyGlobalUiSettings();
+
+// Ctrl + mouse wheel zooms the whole UI (scales the rem-based root font size).
+window.addEventListener(
+  'wheel',
+  (e: WheelEvent) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    adjustRootFontPx(e.deltaY < 0 ? 1 : -1);
+  },
+  { passive: false },
+);
+
 import { toast } from './hooks/use-toast';
 window.addEventListener('xplorer:extension-toast', ((e: CustomEvent) => {
   const { title, description, variant } = e.detail;

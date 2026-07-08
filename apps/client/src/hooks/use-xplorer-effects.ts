@@ -18,7 +18,7 @@ import { useVimMode, isVimModeEnabled, type VimModeActions } from '@/hooks/use-v
 import { useCommandPaletteCommands } from '@/hooks/use-command-palette-commands';
 import type { TabItem, EditorGroup } from '@/types/split-view';
 import type { BottomPanelTabId } from '@/hooks/use-layout-state';
-import type { SortField } from '@/lib/utils';
+import { adjustRootFontPx, type SortField } from '@/lib/utils';
 import type { SplitLayoutHook } from '@/hooks/use-split-layout';
 import type { Toast } from '@/hooks/use-toast';
 import type { ClipboardState } from '@/hooks/use-context-menu';
@@ -386,12 +386,10 @@ export const useXplorerEffects = (deps: XplorerEffectsDeps) => {
         setViewMode(modes[(currentIndex + 1) % modes.length]);
       },
       onZoomIn: () => {
-        const current = parseFloat(document.documentElement.style.fontSize || '16');
-        document.documentElement.style.fontSize = `${Math.min(current + 1, 24)}px`;
+        adjustRootFontPx(1);
       },
       onZoomOut: () => {
-        const current = parseFloat(document.documentElement.style.fontSize || '16');
-        document.documentElement.style.fontSize = `${Math.max(current - 1, 10)}px`;
+        adjustRootFontPx(-1);
       },
       onCloseTab: () => {
         splitLayout.closeTab(activeGroup.id, activeGroup.activeTabId);
