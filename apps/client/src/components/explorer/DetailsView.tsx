@@ -1,10 +1,11 @@
-import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, FolderSizeInfo } from '@/lib/tauri-api';
-import { STORAGE_KEYS } from '@/lib/storage-keys';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
+import { useSetting } from '@/hooks/use-app-settings';
+import type { AppSettings } from '@/lib/app-settings';
 import type { FileGroup } from '@/lib/utils';
 
 interface DetailsViewProps extends ViewComponentProps {
@@ -14,41 +15,13 @@ interface DetailsViewProps extends ViewComponentProps {
 const GROUP_HEADER_HEIGHT = 36;
 const DETAILS_VIRTUALIZATION_THRESHOLD = 200;
 
-type RowDensity = 'compact' | 'normal' | 'comfortable';
+type RowDensity = AppSettings['detailsRowDensity'];
 
 // Row height (px) used for virtualization + vertical padding/icon size classes.
 const ROW_DENSITY: Record<RowDensity, { height: number; pad: string; icon: string }> = {
   compact: { height: 30, pad: 'py-1', icon: 'text-sm' },
   normal: { height: 40, pad: 'py-2.5', icon: 'text-lg' },
   comfortable: { height: 52, pad: 'py-4', icon: 'text-lg' },
-};
-
-const readRowDensity = (): RowDensity => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (raw) {
-      const value = JSON.parse(raw)?.detailsRowDensity;
-      if (value === 'compact' || value === 'normal' || value === 'comfortable') return value;
-    }
-  } catch {
-    /* ignore malformed settings */
-  }
-  return 'normal';
-};
-
-// Reactively track the details row density setting (updates live when changed in Settings).
-const useRowDensity = (): RowDensity => {
-  const [density, setDensity] = useState<RowDensity>(readRowDensity);
-  useEffect(() => {
-    const update = () => setDensity(readRowDensity());
-    window.addEventListener('xplorer:settings-changed', update);
-    window.addEventListener('storage', update);
-    return () => {
-      window.removeEventListener('xplorer:settings-changed', update);
-      window.removeEventListener('storage', update);
-    };
-  }, []);
-  return density;
 };
 
 type FlatItem =
@@ -218,7 +191,7 @@ const DetailsView = (props: DetailsViewProps) => {
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rowCfg = ROW_DENSITY[useRowDensity()];
+  const rowCfg = ROW_DENSITY[useSetting('detailsRowDensity')];
 
   const filesByPath = useMemo(() => {
     const map = new Map<string, FileEntry>();

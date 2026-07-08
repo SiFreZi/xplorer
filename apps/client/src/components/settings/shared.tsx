@@ -239,60 +239,8 @@ export const SystemIntegrationSettings = () => {
 
 // ── Shared types ──────────────────────────────────────────────────
 
-export interface AppSettings {
-  theme: string;
-  language: string;
-  showHiddenFiles: boolean;
-  enableMarkdownPreview: boolean;
-  defaultView: string;
-  enableAnimations: boolean;
-  showFileExtensions: boolean;
-  enableNotifications: boolean;
-  autoSave: boolean;
-  fontSize: string;
-  sidebarWidth: string;
-  reducedMotion: boolean;
-  enhancedFocus: boolean;
-  highContrast: boolean;
-  autoCalculateFolderSizes: boolean;
-  rememberViewPerFolder: boolean;
-  detailsRowDensity: 'compact' | 'normal' | 'comfortable';
-  aiSearchProvider: string;
-  aiSearchModel: string;
-  aiSearchApiKey: string;
-  aiServiceMode: 'cloud' | 'custom';
-  aiCloudModel: string;
-  aiCustomProvider: string;
-  aiCustomModel: string;
-  aiCustomApiKey: string;
-}
-
-export const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'glass',
-  language: '',
-  showHiddenFiles: false,
-  enableMarkdownPreview: true,
-  defaultView: 'grid',
-  enableAnimations: true,
-  showFileExtensions: true,
-  enableNotifications: true,
-  autoSave: true,
-  fontSize: 'medium',
-  sidebarWidth: 'medium',
-  reducedMotion: false,
-  enhancedFocus: false,
-  highContrast: false,
-  autoCalculateFolderSizes: false,
-  rememberViewPerFolder: false,
-  detailsRowDensity: 'normal',
-  aiSearchProvider: 'auto',
-  aiSearchModel: '',
-  aiSearchApiKey: '',
-  aiServiceMode: 'cloud',
-  aiCloudModel: 'anthropic/claude-sonnet-4',
-  aiCustomProvider: 'ollama',
-  aiCustomModel: '',
-  aiCustomApiKey: '',
-};
+// AppSettings + DEFAULT_SETTINGS live in the framework-agnostic single source of
+// truth (`@/lib/app-settings`); re-exported here so existing importers keep working.
+export { DEFAULT_SETTINGS, type AppSettings } from '@/lib/app-settings';
 
 export const SETTINGS_KEY = STORAGE_KEYS.SETTINGS;

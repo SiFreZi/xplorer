@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import { FileEntry, FolderSizeInfo } from '@/lib/tauri-api';
 import React from 'react';
 import { STORAGE_KEYS } from '@/lib/storage-keys';
+import { readAppSettings } from '@/lib/app-settings';
 import {
   FolderClosed,
   FolderOpen,
@@ -605,21 +606,77 @@ export const getExplicitDefaultViewMode = (): string | null => {
 export const getDefaultViewMode = (): string => getExplicitDefaultViewMode() ?? 'medium';
 
 // Font size utility functions
-export const applyFontSize = (size: 'small' | 'medium' | 'large' | 'xl') => {
+type FontSizeName = 'small' | 'medium' | 'large' | 'xl';
+
+// Root font-size (px) for each preset. Everything else scales via rem.
+const FONT_SIZE_PX: Record<FontSizeName, number> = {
+  small: 12,
+  medium: 14,
+  large: 16,
+  xl: 18,
+};
+
+// Bounds for the continuous Ctrl+wheel / Ctrl+= zoom.
+const ROOT_FONT_MIN_PX = 10;
+const ROOT_FONT_MAX_PX = 24;
+
+/**
+ * Set the effective root font-size (px) that scales the whole rem-based UI, and
+ * persist it so the zoom survives reloads. Inline style wins over the `.font-*`
+ * class, so this is the authoritative rendered size.
+ */
+export const setRootFontPx = (px: number) => {
+  const clamped = Math.min(Math.max(Math.round(px), ROOT_FONT_MIN_PX), ROOT_FONT_MAX_PX);
+  document.documentElement.style.fontSize = `${clamped}px`;
+  localStorage.setItem(STORAGE_KEYS.UI_ZOOM_PX, String(clamped));
+};
+
+/** Current effective root font-size (px): inline → persisted zoom → preset. */
+export const getRootFontPx = (): number => {
+  const inline = parseFloat(document.documentElement.style.fontSize);
+  if (!Number.isNaN(inline)) return inline;
+  const persisted = parseFloat(localStorage.getItem(STORAGE_KEYS.UI_ZOOM_PX) ?? '');
+  if (!Number.isNaN(persisted)) return persisted;
+  const size = (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSizeName | null) ?? 'medium';
+  return FONT_SIZE_PX[size] ?? FONT_SIZE_PX.medium;
+};
+
+/** Nudge the root font-size by `deltaPx` (used by Ctrl+wheel and Ctrl+=/Ctrl+-). */
+export const adjustRootFontPx = (deltaPx: number) => setRootFontPx(getRootFontPx() + deltaPx);
+
+export const applyFontSize = (size: FontSizeName) => {
   const root = document.documentElement;
   root.classList.remove('font-small', 'font-medium', 'font-large', 'font-xl');
   root.classList.add(`font-${size}`);
   localStorage.setItem(STORAGE_KEYS.FONT_SIZE, size);
+  // Picking a preset is authoritative: reset any Ctrl-zoom to the preset size.
+  setRootFontPx(FONT_SIZE_PX[size]);
 };
 
 export const loadFontSize = () => {
-  const saved = localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as
-    | 'small'
-    | 'medium'
-    | 'large'
-    | 'xl'
-    | null;
-  applyFontSize(saved || 'medium');
+  const size = (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSizeName | null) ?? 'medium';
+  const root = document.documentElement;
+  root.classList.remove('font-small', 'font-medium', 'font-large', 'font-xl');
+  root.classList.add(`font-${size}`);
+  // Restore the persisted Ctrl-zoom if present, otherwise fall back to the preset.
+  const persisted = parseFloat(localStorage.getItem(STORAGE_KEYS.UI_ZOOM_PX) ?? '');
+  setRootFontPx(!Number.isNaN(persisted) ? persisted : FONT_SIZE_PX[size]);
+};
+
+/**
+ * Apply all settings that manipulate the root DOM element (font size +
+ * accessibility classes). Must run once at app startup so the UI is consistent
+ * from the first paint — previously these were only applied when the Settings
+ * page mounted, which caused a visible jump (e.g. font shrinking to the medium
+ * 14px size) the first time Settings was opened.
+ */
+export const applyGlobalUiSettings = () => {
+  loadFontSize();
+  const settings = readAppSettings();
+  const root = document.documentElement;
+  root.classList.toggle('reduce-motion', settings.reducedMotion);
+  root.classList.toggle('enhanced-focus', settings.enhancedFocus);
+  root.classList.toggle('high-contrast', settings.highContrast);
 };
 
 // ── Custom Theme support ─────────────────────────────────────────────────────

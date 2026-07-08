@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, Sparkles, Check } from 'lucide-react';
 import { STORAGE_KEYS } from '@/lib/storage-keys';
+import { emitAppSettingsChanged } from '@/lib/app-settings';
 
 interface ChatModelPickerProps {
   currentModel: string;
@@ -77,7 +78,7 @@ const ChatModelPicker = ({ currentModel, onModelChange }: ChatModelPickerProps) 
       s.aiServiceMode = 'cloud';
       s.aiCloudModel = modelId;
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(s));
-      window.dispatchEvent(new CustomEvent('xplorer-settings-changed'));
+      emitAppSettingsChanged();
     } catch (err) {
       console.warn('[ChatModelPicker] Failed to persist model:', err);
     }

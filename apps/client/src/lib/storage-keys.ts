@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   SETTINGS: 'xplorer:settings',
   UI_STATE: 'xplorer:ui-state',
   FONT_SIZE: 'xplorer:font-size',
+  UI_ZOOM_PX: 'xplorer:ui-zoom-px',
   SPLIT_LAYOUT: 'xplorer:split-layout',
   SMART_VIEW: 'xplorer:folder-views',
   FOLDER_SETTINGS: 'xplorer:folder-settings',
