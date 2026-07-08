@@ -1,17 +1,55 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, FolderSizeInfo } from '@/lib/tauri-api';
+import { STORAGE_KEYS } from '@/lib/storage-keys';
 import { ViewComponentProps } from './FileGridTypes';
+import { useDraggable } from '@/hooks/use-draggable';
 import type { FileGroup } from '@/lib/utils';
 
 interface DetailsViewProps extends ViewComponentProps {
   fileGroups?: FileGroup[] | null;
 }
 
-const DETAILS_ROW_HEIGHT = 40;
 const GROUP_HEADER_HEIGHT = 36;
 const DETAILS_VIRTUALIZATION_THRESHOLD = 200;
+
+type RowDensity = 'compact' | 'normal' | 'comfortable';
+
+// Row height (px) used for virtualization + vertical padding/icon size classes.
+const ROW_DENSITY: Record<RowDensity, { height: number; pad: string; icon: string }> = {
+  compact: { height: 30, pad: 'py-1', icon: 'text-sm' },
+  normal: { height: 40, pad: 'py-2.5', icon: 'text-lg' },
+  comfortable: { height: 52, pad: 'py-4', icon: 'text-lg' },
+};
+
+const readRowDensity = (): RowDensity => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    if (raw) {
+      const value = JSON.parse(raw)?.detailsRowDensity;
+      if (value === 'compact' || value === 'normal' || value === 'comfortable') return value;
+    }
+  } catch {
+    /* ignore malformed settings */
+  }
+  return 'normal';
+};
+
+// Reactively track the details row density setting (updates live when changed in Settings).
+const useRowDensity = (): RowDensity => {
+  const [density, setDensity] = useState<RowDensity>(readRowDensity);
+  useEffect(() => {
+    const update = () => setDensity(readRowDensity());
+    window.addEventListener('xplorer:settings-changed', update);
+    window.addEventListener('storage', update);
+    return () => {
+      window.removeEventListener('xplorer:settings-changed', update);
+      window.removeEventListener('storage', update);
+    };
+  }, []);
+  return density;
+};
 
 type FlatItem =
   | { type: 'header'; group: { name: string; count: number } }
@@ -20,6 +58,7 @@ type FlatItem =
 interface FileRowProps {
   file: FileEntry;
   selectedFiles: Set<string>;
+  allFiles: FileEntry[];
   getFileIcon: (file: FileEntry) => React.ReactNode;
   formatFileSize: (bytes: number) => string;
   formatFolderSize: (folderSizeInfo: FolderSizeInfo | null, isCalculating?: boolean) => string;
@@ -30,12 +69,15 @@ interface FileRowProps {
   getFolderSize: (path: string) => FolderSizeInfo | null;
   isCalculatingSize: (path: string) => boolean;
   onCalculateFolderSize?: (path: string) => void;
+  rowPadClass: string;
+  iconSizeClass: string;
 }
 
 const FileRow = React.memo(
   ({
     file,
     selectedFiles,
+    allFiles,
     getFileIcon,
     formatFileSize,
     formatFolderSize,
@@ -46,8 +88,12 @@ const FileRow = React.memo(
     getFolderSize,
     isCalculatingSize,
     onCalculateFolderSize,
+    rowPadClass,
+    iconSizeClass,
   }: FileRowProps) => {
     const { t } = useTranslation();
+    // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
+    const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
     const handleClick = useCallback(
       (e: React.MouseEvent) => onFileClick(file.path, e),
       [onFileClick, file.path],
@@ -93,18 +139,19 @@ const FileRow = React.memo(
         tabIndex={0}
         data-file-path={file.path}
         data-drop-target={file.is_dir ? file.path : undefined}
-        className={`hover:bg-xp-surface-light grid cursor-pointer grid-cols-12 items-center gap-3 px-3 py-2.5 transition-colors ${
+        className={`hover:bg-xp-surface-light grid cursor-pointer select-none grid-cols-12 items-center gap-3 px-3 ${rowPadClass} transition-colors ${
           selectedFiles.has(file.path)
             ? 'bg-xp-purple/20 border-xp-purple/40 border'
             : 'text-xp-text border border-transparent'
         } `}
+        {...dragHandlers}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
         onKeyDown={handleKeyDown}
       >
         <div className="col-span-1 flex justify-center">
-          <span className="text-lg">{getFileIcon(file)}</span>
+          <span className={iconSizeClass}>{getFileIcon(file)}</span>
         </div>
         <div className="col-span-5 min-w-0">
           <div className="truncate font-medium">{file.name}</div>
@@ -171,6 +218,7 @@ const DetailsView = (props: DetailsViewProps) => {
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const rowCfg = ROW_DENSITY[useRowDensity()];
 
   const filesByPath = useMemo(() => {
     const map = new Map<string, FileEntry>();
@@ -230,9 +278,9 @@ const DetailsView = (props: DetailsViewProps) => {
   const estimateSize = useCallback(
     (index: number) => {
       const item = flatItems[index];
-      return item?.type === 'header' ? GROUP_HEADER_HEIGHT : DETAILS_ROW_HEIGHT;
+      return item?.type === 'header' ? GROUP_HEADER_HEIGHT : rowCfg.height;
     },
-    [flatItems],
+    [flatItems, rowCfg.height],
   );
 
   const virtualizer = useVirtualizer({
@@ -269,6 +317,7 @@ const DetailsView = (props: DetailsViewProps) => {
 
   const stableRowProps = {
     selectedFiles,
+    allFiles: files,
     getFileIcon,
     formatFileSize,
     formatFolderSize,
@@ -279,6 +328,8 @@ const DetailsView = (props: DetailsViewProps) => {
     getFolderSize,
     isCalculatingSize,
     onCalculateFolderSize: calculateFolderSize,
+    rowPadClass: rowCfg.pad,
+    iconSizeClass: rowCfg.icon,
   };
 
   const renderFlatItem = (item: FlatItem) => {

@@ -302,6 +302,11 @@
       "fileExtensionsDesc": "Tampilkan ekstensi jenis file di nama",
       "autoFolderSizes": "Hitung Otomatis Ukuran Folder",
       "autoFolderSizesDesc": "Otomatis menghitung dan menampilkan ukuran folder di tampilan detail",
+      "rowDensity": "Jarak Baris",
+      "rowDensityDesc": "Sesuaikan tinggi baris di tampilan Detail",
+      "rowDensityCompact": "Ringkas",
+      "rowDensityNormal": "Normal",
+      "rowDensityComfortable": "Longgar",
       "preview": "Pratinjau",
       "markdownPreview": "Pratinjau Markdown",
       "markdownPreviewDesc": "Render file markdown alih-alih menampilkan teks mentah"

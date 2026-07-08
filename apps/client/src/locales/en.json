@@ -302,6 +302,11 @@
       "fileExtensionsDesc": "Show file type extensions in names",
       "autoFolderSizes": "Auto-Calculate Folder Sizes",
       "autoFolderSizesDesc": "Automatically calculate and display folder sizes in details view",
+      "rowDensity": "Row Spacing",
+      "rowDensityDesc": "Adjust row height in the Details view",
+      "rowDensityCompact": "Compact",
+      "rowDensityNormal": "Normal",
+      "rowDensityComfortable": "Comfortable",
       "preview": "Preview",
       "markdownPreview": "Markdown Preview",
       "markdownPreviewDesc": "Render markdown files instead of showing raw text"
