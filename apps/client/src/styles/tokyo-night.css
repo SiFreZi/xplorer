@@ -44,6 +44,17 @@
 .bg-xp-yellow {
   background-color: color-mix(in srgb, var(--xp-yellow) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
 }
+/* Accent falls back to blue: --xp-accent is only set for custom themes via JS. */
+.bg-xp-accent {
+  background-color: color-mix(
+    in srgb,
+    var(--xp-accent, var(--xp-blue)) calc(var(--tw-bg-opacity, 1) * 100%),
+    transparent
+  );
+}
+.bg-xp-border {
+  background-color: color-mix(in srgb, var(--xp-border) calc(var(--tw-bg-opacity, 1) * 100%), transparent);
+}
 
 .text-xp-text {
   color: var(--xp-text);
