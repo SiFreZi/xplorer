@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
+import { useDraggable } from '@/hooks/use-draggable';
 
 interface ColumnData {
   path: string;
@@ -17,6 +18,8 @@ const ColumnFileRow = React.memo(
     file,
     isActive,
     isSelected,
+    selectedFiles,
+    allFiles,
     getFileIcon,
     onClick,
     onDoubleClick,
@@ -25,16 +28,23 @@ const ColumnFileRow = React.memo(
     file: FileEntry;
     isActive: boolean;
     isSelected: boolean;
+    selectedFiles: Set<string>;
+    allFiles: FileEntry[];
     getFileIcon: (file: FileEntry) => React.ReactNode;
     onClick: (e: React.MouseEvent) => void;
     onDoubleClick: () => void;
     onRightClick: (e: React.MouseEvent) => void;
   }) => {
+    // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
+    const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
     return (
       <div
         role="option"
         aria-selected={isActive || isSelected}
         tabIndex={0}
+        onMouseDown={dragHandlers.onMouseDown}
+        onMouseMove={dragHandlers.onMouseMove}
+        onMouseUp={dragHandlers.onMouseUp}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         onContextMenu={onRightClick}
@@ -48,6 +58,7 @@ const ColumnFileRow = React.memo(
           padding: '4px 12px',
           cursor: 'pointer',
           fontSize: '13px',
+          userSelect: 'none',
           color: 'var(--xp-text)',
           backgroundColor: (() => {
             if (isActive) return 'var(--xp-accent)';
@@ -65,6 +76,7 @@ const ColumnFileRow = React.memo(
           }
         }}
         onMouseLeave={(e) => {
+          dragHandlers.onMouseLeave();
           if (!isActive && !isSelected) {
             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
           } else if (isSelected && !isActive) {
@@ -169,6 +181,8 @@ const VirtualizedColumnPane = ({
             file={file}
             isActive={column.selectedFile === file.path}
             isSelected={selectedFiles.has(file.path)}
+            selectedFiles={selectedFiles}
+            allFiles={column.files}
             getFileIcon={getFileIcon}
             onClick={(e) => handleColumnFileClick(file, colIndex, e)}
             onDoubleClick={() => handleFileDoubleClick(file)}
@@ -229,6 +243,8 @@ const VirtualizedColumnPane = ({
                 file={file}
                 isActive={column.selectedFile === file.path}
                 isSelected={selectedFiles.has(file.path)}
+                selectedFiles={selectedFiles}
+                allFiles={column.files}
                 getFileIcon={getFileIcon}
                 onClick={(e) => handleColumnFileClick(file, colIndex, e)}
                 onDoubleClick={() => handleFileDoubleClick(file)}
