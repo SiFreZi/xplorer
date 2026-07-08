@@ -35,6 +35,8 @@ export interface SharedPaneActions {
   handleBackgroundRightClick: (event: React.MouseEvent, groupId: string) => void;
   handleDelete: (selectedFiles: Set<string>, refetch: () => void) => void;
   handleCreateFolder: (currentPath: string, refetch: () => void) => void;
+  /** Open a folder in a new tab (reuses the context-menu "Open in new tab" action). */
+  openInNewTab: (file: FileEntry) => void;
 
   // Theme
   theme: string;
@@ -180,6 +182,7 @@ const EditorGroupPane = ({
     handleBackgroundRightClick,
     handleDelete,
     handleCreateFolder,
+    openInNewTab,
     onGDriveNavigate: _onGDriveNavigate,
     onGDriveFileSelect: _onGDriveFileSelect,
     onError,
@@ -634,8 +637,21 @@ const EditorGroupPane = ({
     <div
       className={`flex h-full flex-col overflow-hidden ${isActive ? 'ring-xp-blue/30 ring-1' : ''}`}
       data-drop-target={isDroppablePath ? currentPath : undefined}
-      onMouseDown={() => {
+      onMouseDown={(e) => {
+        if (e.button === 1) e.preventDefault(); // avoid middle-click autoscroll
         if (!isActive) onSetActiveGroup(group.id);
+      }}
+      onAuxClick={(e) => {
+        // Middle-click a folder => open it in a new tab.
+        if (e.button !== 1) return;
+        const path = (e.target as HTMLElement)
+          .closest('[data-file-path]')
+          ?.getAttribute('data-file-path');
+        const file = path ? sortedFilesRef.current.find((f) => f.path === path) : undefined;
+        if (file?.is_dir) {
+          e.preventDefault();
+          openInNewTab(file);
+        }
       }}
     >
       {/* Tab bar — shown when multiple tabs or multiple panes */}

@@ -60,6 +60,7 @@ const GalleryStripThumb = React.memo(
         aria-selected={isSelected}
         aria-label={`${file.name}${file.is_dir ? ', folder' : ', file'}`}
         data-gallery-path={file.path}
+        data-file-path={file.path}
         className={`h-16 w-16 flex-shrink-0 cursor-pointer overflow-hidden rounded-md border-2 transition-all ${(() => {
           if (isFocused) return 'border-xp-blue/70 ring-xp-blue/50 scale-105 ring-1';
           if (isSelected) return 'border-xp-blue/50';
