@@ -5,8 +5,10 @@ vite.config.ts.*
 *.tar.gz
 target
 
-# Built desktop binary copied to repo root by build-exe.bat / scripts/build-exe.ps1
+# Built desktop binary copied to repo root by build-exe.bat
 /xplorer.exe
+# NSIS installer copied to repo root by build-installer.bat
+/Xplorer_*_x64-setup.exe
 # Portable MSVC toolchain installer (dropped in root for local builds)
 /PortableBuildTools.exe
 
