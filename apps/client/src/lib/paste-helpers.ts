@@ -33,6 +33,7 @@ export interface PasteContext {
 
 export interface PasteResult {
   succeeded: number;
+  skipped: number;
   errors: string[];
   isCut: boolean;
 }
@@ -67,6 +68,7 @@ export const executePaste = async (ctx: PasteContext): Promise<PasteResult> => {
     total > 1 ? rawToast({ title: `${verb}...`, description: `0 / ${total} items` }) : null;
 
   let succeeded = 0;
+  let skipped = 0;
   const errors: string[] = [];
   let applyToAllRes: ConflictResolution | null = null;
   const sep = detectSep(targetPath);
@@ -99,7 +101,7 @@ export const executePaste = async (ctx: PasteContext): Promise<PasteResult> => {
         }
         if (!resolution) resolution = 'replace';
         if (resolution === 'skip') {
-          succeeded++;
+          skipped++;
           continue;
         }
         if (resolution === 'keep-both') {
@@ -139,7 +141,7 @@ export const executePaste = async (ctx: PasteContext): Promise<PasteResult> => {
   if (progressToast) progressToast.dismiss();
   emitFilesChanged();
 
-  return { succeeded, errors, isCut };
+  return { succeeded, skipped, errors, isCut };
 };
 
 // ── Toast helpers ────────────────────────────────────────────────────────────
@@ -154,16 +156,27 @@ export const showPasteResultToast = (
   }) => void,
 ): void => {
   const verbPast = result.isCut ? 'moved' : 'copied';
-  if (result.errors.length === 0) {
-    toast({
-      title: result.isCut ? 'Moved' : 'Copied',
-      description: `${result.succeeded} item${result.succeeded > 1 ? 's' : ''} ${verbPast}`,
-    });
-  } else {
+  const { succeeded, skipped, errors } = result;
+  if (errors.length > 0) {
+    const skippedNote = skipped > 0 ? `, ${skipped} skipped` : '';
     toast({
       title: 'Paste completed with errors',
-      description: `${result.succeeded} ${verbPast}, ${result.errors.length} failed: ${result.errors.slice(0, 3).join('; ')}${result.errors.length > 3 ? '...' : ''}`,
+      description: `${succeeded} ${verbPast}${skippedNote}, ${errors.length} failed: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`,
       variant: 'destructive',
     });
+    return;
   }
+  // Nothing actually copied/moved — everything was skipped.
+  if (succeeded === 0 && skipped > 0) {
+    toast({
+      title: 'Skipped',
+      description: `${skipped} item${skipped > 1 ? 's' : ''} skipped`,
+    });
+    return;
+  }
+  const skippedNote = skipped > 0 ? `, ${skipped} skipped` : '';
+  toast({
+    title: result.isCut ? 'Moved' : 'Copied',
+    description: `${succeeded} item${succeeded > 1 ? 's' : ''} ${verbPast}${skippedNote}`,
+  });
 };

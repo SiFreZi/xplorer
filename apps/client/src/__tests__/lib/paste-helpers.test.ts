@@ -15,7 +15,10 @@ vi.mock('@/lib/tauri-api', () => ({
     checkConflicts: mockCheckConflicts,
     fileExists: mockFileExists,
     moveFile: mockMoveFile,
+    moveWithProgress: mockMoveFile,
     copy: mockCopy,
+    copyWithProgress: mockCopy,
+    removeFile: vi.fn(() => Promise.resolve()),
     getRenameDest: mockGetRenameDest,
     readDirectory: vi.fn(() => Promise.resolve([])),
     getFileIcon: vi.fn(() => ''),
@@ -183,7 +186,8 @@ describe('executePaste', () => {
 
     const result = await executePaste(ctx);
 
-    expect(result.succeeded).toBe(1); // skipped counts as succeeded
+    expect(result.succeeded).toBe(0);
+    expect(result.skipped).toBe(1);
     expect(mockCopy).not.toHaveBeenCalled();
   });
 
@@ -263,7 +267,7 @@ describe('executePaste', () => {
 describe('showPasteResultToast', () => {
   it('shows success toast for copy', () => {
     const toast = vi.fn();
-    const result: PasteResult = { succeeded: 3, errors: [], isCut: false };
+    const result: PasteResult = { succeeded: 3, skipped: 0, errors: [], isCut: false };
 
     showPasteResultToast(result, toast);
 
@@ -275,9 +279,37 @@ describe('showPasteResultToast', () => {
     );
   });
 
+  it('shows skipped toast when every item was skipped', () => {
+    const toast = vi.fn();
+    const result: PasteResult = { succeeded: 0, skipped: 2, errors: [], isCut: false };
+
+    showPasteResultToast(result, toast);
+
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Skipped',
+        description: '2 items skipped',
+      }),
+    );
+  });
+
+  it('notes skipped items alongside copied ones', () => {
+    const toast = vi.fn();
+    const result: PasteResult = { succeeded: 2, skipped: 1, errors: [], isCut: false };
+
+    showPasteResultToast(result, toast);
+
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Copied',
+        description: '2 items copied, 1 skipped',
+      }),
+    );
+  });
+
   it('shows success toast for move with singular item', () => {
     const toast = vi.fn();
-    const result: PasteResult = { succeeded: 1, errors: [], isCut: true };
+    const result: PasteResult = { succeeded: 1, skipped: 0, errors: [], isCut: true };
 
     showPasteResultToast(result, toast);
 
@@ -293,6 +325,7 @@ describe('showPasteResultToast', () => {
     const toast = vi.fn();
     const result: PasteResult = {
       succeeded: 2,
+      skipped: 0,
       errors: ['file1: Permission denied', 'file2: Not found'],
       isCut: false,
     };
@@ -311,6 +344,7 @@ describe('showPasteResultToast', () => {
     const toast = vi.fn();
     const result: PasteResult = {
       succeeded: 0,
+      skipped: 0,
       errors: ['err1', 'err2', 'err3', 'err4'],
       isCut: false,
     };
