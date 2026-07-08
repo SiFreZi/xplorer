@@ -270,6 +270,26 @@ export const useShortcuts = (handlers: ShortcutHandlers, context: string = 'file
       }
     };
 
+    // Mouse side buttons: button 3 = back, button 4 = forward
+    const handleMouseUp = (event: MouseEvent) => {
+      if (event.button !== 3 && event.button !== 4) return;
+      // Ignore while a modal dialog or command palette is open
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('[role="dialog"]') || document.querySelector('[data-command-palette]')) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const h = handlersRef.current;
+      if (event.button === 3) h.onNavigateBack?.();
+      else h.onNavigateForward?.();
+    };
+
+    // Suppress the webview's own history navigation on side-button press
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button === 3 || event.button === 4) event.preventDefault();
+    };
+
     // Listen for global shortcuts from the backend
     const unlistenGlobal = listenToEvent<ShortcutAction>('global_shortcut_triggered', (action) => {
       executeAction(action);
@@ -280,9 +300,13 @@ export const useShortcuts = (handlers: ShortcutHandlers, context: string = 'file
     window.addEventListener('shortcuts-changed', handleShortcutsChanged);
 
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousedown', handleMouseDown);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('shortcuts-changed', handleShortcutsChanged);
       unlistenGlobal.then((unlisten) => unlisten()).catch(console.error);
     };
