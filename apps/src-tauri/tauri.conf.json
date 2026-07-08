@@ -47,7 +47,8 @@
     "active": true,
     "targets": "all",
     "resources": {
-      "../../packages/cli/bin/xplorer.mjs": "xplorer.mjs"
+      "../../packages/cli/bin/xplorer.mjs": "xplorer.mjs",
+      "icons/icon.png": "icons/icon.png"
     },
     "icon": [
       "icons/icon.png",

@@ -8,8 +8,7 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { isTauri } from '@/lib/transport';
-import { TauriAPI } from '@/lib/tauri-api';
-import { validateDrop, buildDestinationPath } from '@/lib/drag-utils';
+import { validateDrop } from '@/lib/drag-utils';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,13 +16,11 @@ interface DragState {
   isDragging: boolean;
   dragSource: 'internal' | 'external' | null;
   draggedPaths: string[];
-  hoveredDropTarget: string | null; // path from data-drop-target
   operation: 'copy' | 'move';
 }
 
 type DragAction =
   | { type: 'START_DRAG'; paths: string[]; source: 'internal' | 'external'; op: 'copy' | 'move' }
-  | { type: 'SET_HOVER'; targetPath: string | null }
   | { type: 'SET_OPERATION'; op: 'copy' | 'move' }
   | { type: 'END_DRAG' };
 
@@ -31,8 +28,10 @@ interface DragDropContextValue {
   dragState: DragState;
   /** Register an element as a drop target. Returns cleanup function. */
   registerDropTarget: (path: string, element: HTMLElement) => () => void;
-  /** Notify context that an internal drag is starting (from useDraggable) */
+  /** Notify context that an internal drag is starting (from useDraggable). */
   startInternalDrag: (paths: string[]) => void;
+  /** Force-reset drag state (e.g. when a native drag ends outside the window). */
+  endDrag: () => void;
 }
 
 // ── Reducer ──────────────────────────────────────────────────────────────────
@@ -41,7 +40,6 @@ const initialState: DragState = {
   isDragging: false,
   dragSource: null,
   draggedPaths: [],
-  hoveredDropTarget: null,
   operation: 'move',
 };
 
@@ -52,12 +50,8 @@ const dragReducer = (state: DragState, action: DragAction): DragState => {
         isDragging: true,
         dragSource: action.source,
         draggedPaths: action.paths,
-        hoveredDropTarget: null,
         operation: action.op,
       };
-    case 'SET_HOVER':
-      if (state.hoveredDropTarget === action.targetPath) return state;
-      return { ...state, hoveredDropTarget: action.targetPath };
     case 'SET_OPERATION':
       if (state.operation === action.op) return state;
       return { ...state, operation: action.op };
@@ -76,6 +70,12 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
   const [dragState, dispatch] = useReducer(dragReducer, initialState);
   const stateRef = useRef(dragState);
   stateRef.current = dragState;
+
+  // Synchronous drag-source tracker. The React `dragState.dragSource` is set via
+  // dispatch and is NOT updated before the native OS drag 'enter' event can
+  // fire, so relying on it races: an INTERNAL drag can be misclassified as
+  // external (=> copy). This ref is set synchronously in startInternalDrag.
+  const dragSourceRef = useRef<'internal' | 'external' | null>(null);
 
   // Track the currently highlighted element for cleanup
   const highlightedRef = useRef<HTMLElement | null>(null);
@@ -134,8 +134,17 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
             // Files entering the window (from OS or from our own startDrag)
             const paths = (payload as { type: string; paths: string[] }).paths;
             if (paths?.length > 0) {
-              if (!stateRef.current.isDragging) {
-                dispatch({ type: 'START_DRAG', paths, source: 'external', op: 'copy' });
+              // If no drag is active yet, this is an EXTERNAL drag (from the OS).
+              // Internal drags already set dragSourceRef synchronously in
+              // startInternalDrag before the native drag begins.
+              if (!dragSourceRef.current) {
+                dragSourceRef.current = 'external';
+                dispatch({
+                  type: 'START_DRAG',
+                  paths,
+                  source: 'external',
+                  op: 'copy',
+                });
               }
             }
           } else if (payload.type === 'over') {
@@ -194,7 +203,9 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
                   highlightedRef.current = target.element;
                 }
                 lastHoverPathRef.current = targetPath;
-                dispatch({ type: 'SET_HOVER', targetPath });
+                // The folder highlight is applied via direct DOM (data-drop-hover)
+                // above; there is deliberately no React state for the hovered
+                // target, so hovering never re-renders the app during the drag.
               }
             }
           } else if (payload.type === 'drop') {
@@ -215,36 +226,42 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
               if (target) {
                 const validation = validateDrop(paths, target.path);
                 if (validation.valid) {
-                  const op = stateRef.current.operation;
-                  // Execute the drop
-                  (async () => {
-                    try {
-                      for (const sourcePath of paths) {
-                        const dest = buildDestinationPath(sourcePath, target.path);
-                        if (op === 'copy' || stateRef.current.dragSource === 'external') {
-                          await TauriAPI.copy(sourcePath, dest);
-                        } else {
-                          await TauriAPI.moveFile(sourcePath, dest);
-                        }
-                      }
-                      window.dispatchEvent(new CustomEvent('files-changed'));
-                    } catch (error) {
-                      window.dispatchEvent(
-                        new CustomEvent('drag-drop-error', {
-                          detail: { message: String(error) },
-                        }),
-                      );
-                    }
-                  })();
+                  const source = dragSourceRef.current;
+                  // For internal drags the operation is toggled live by Ctrl
+                  // during the drag (SET_OPERATION on keydown/keyup) and read
+                  // here from state. External drags are always a copy.
+                  const op = source === 'external' ? 'copy' : stateRef.current.operation;
+                  // Hand off to the paste pipeline so conflict resolution
+                  // (overwrite/keep-both/skip) and progress toasts apply, just
+                  // like a normal paste. Handled in useFileOperations.
+                  //
+                  // Deferred to a macrotask so the native OS drag fully
+                  // completes (and WebView2 releases its drag loop) BEFORE we
+                  // open any modal dialog — doing this synchronously inside the
+                  // drop callback freezes the next drop on Windows.
+                  const dropDetail = {
+                    paths,
+                    targetPath: target.path,
+                    operation: op,
+                    source,
+                  };
+                  setTimeout(() => {
+                    window.dispatchEvent(
+                      new CustomEvent('xplorer-file-drop', { detail: dropDetail }),
+                    );
+                  }, 0);
                 }
               }
             }
             dispatch({ type: 'END_DRAG' });
+            dragSourceRef.current = null;
           } else if (payload.type === 'leave') {
             clearHighlight();
-            // Only end drag if it was external — internal startDrag returns to our window
-            if (stateRef.current.dragSource === 'external') {
+            // Only end drag if it was external — an internal startDrag returns
+            // to our window (the drag continues), so keep its state alive.
+            if (dragSourceRef.current === 'external') {
               dispatch({ type: 'END_DRAG' });
+              dragSourceRef.current = null;
             }
           }
         })
@@ -259,23 +276,22 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
     };
   }, [findDropTarget, clearHighlight]);
 
-  // Listen for Ctrl key press/release to toggle copy vs. move during drag
+  // Toggle copy/move live while an INTERNAL drag is in progress: Ctrl held =>
+  // copy, released => move. These key events fire during the drag; dispatching
+  // SET_OPERATION only re-renders when the operation actually changes (the
+  // reducer no-ops equal values), so it stays cheap. The drop reads the result
+  // from state. (This is the original, working behaviour.)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === 'Control' &&
-        stateRef.current.isDragging &&
-        stateRef.current.dragSource === 'internal'
-      ) {
+      // Bare Alt puts a Windows window into menu-activation mode, which conflicts
+      // with the native OLE drag loop and freezes the app. Suppress it.
+      if (e.key === 'Alt') e.preventDefault();
+      if (e.key === 'Control' && dragSourceRef.current === 'internal') {
         dispatch({ type: 'SET_OPERATION', op: 'copy' });
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (
-        e.key === 'Control' &&
-        stateRef.current.isDragging &&
-        stateRef.current.dragSource === 'internal'
-      ) {
+      if (e.key === 'Control' && dragSourceRef.current === 'internal') {
         dispatch({ type: 'SET_OPERATION', op: 'move' });
       }
     };
@@ -292,11 +308,27 @@ export const DragDropProvider = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   const startInternalDrag = useCallback((paths: string[]) => {
-    dispatch({ type: 'START_DRAG', paths, source: 'internal', op: 'move' });
+    // Set the source SYNCHRONOUSLY (before the native drag begins) so the
+    // 'enter' handler doesn't misclassify this internal drag as external.
+    dragSourceRef.current = 'internal';
+    dispatch({
+      type: 'START_DRAG',
+      paths,
+      source: 'internal',
+      op: 'move',
+    });
   }, []);
 
+  const endDrag = useCallback(() => {
+    clearHighlight();
+    dragSourceRef.current = null;
+    if (stateRef.current.isDragging) {
+      dispatch({ type: 'END_DRAG' });
+    }
+  }, [clearHighlight]);
+
   return (
-    <DragDropContext.Provider value={{ dragState, registerDropTarget, startInternalDrag }}>
+    <DragDropContext.Provider value={{ dragState, registerDropTarget, startInternalDrag, endDrag }}>
       {children}
       {dragState.isDragging && <DragOverlay state={dragState} overlayRef={overlayRef} />}
     </DragDropContext.Provider>

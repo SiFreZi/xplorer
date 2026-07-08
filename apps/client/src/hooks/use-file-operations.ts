@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TauriAPI, type FileEntry, type ConflictFileInfo } from '@/lib/tauri-api';
 import { PATH_SEPARATOR, detectSep } from '@/lib/constants';
@@ -230,6 +230,60 @@ export const useFileOperations = (deps: UseFileOperationsDeps) => {
   setClipboardBothRef.current = setClipboardBoth;
   const runPasteRef = useRef(runPaste);
   runPasteRef.current = runPaste;
+
+  // ── Drag-and-drop drop handler ─────────────────────────────────────────
+  // DragDropContext dispatches 'xplorer-file-drop' when files are dropped onto
+  // a folder. Route them through the paste pipeline so conflict resolution
+  // (overwrite / keep-both / skip) and progress toasts apply.
+  const processingDropRef = useRef(false);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { paths: string[]; targetPath: string; operation: 'copy' | 'move' }
+        | undefined;
+      if (!detail?.paths?.length || !detail.targetPath) return;
+      // Ignore a new drop while a previous one is still being resolved (e.g. a
+      // conflict dialog is open) — prevents overlapping dialogs / a frozen UI.
+      if (processingDropRef.current) return;
+      processingDropRef.current = true;
+      void (async () => {
+        try {
+          const files: FileEntry[] = [];
+          for (const p of detail.paths) {
+            const name =
+              p
+                .replace(/[/\\]+$/, '')
+                .split(/[/\\]/)
+                .pop() || p;
+            let is_dir = false;
+            try {
+              is_dir = await TauriAPI.isDir(p);
+            } catch {
+              /* treat as file if stat fails */
+            }
+            files.push({
+              name,
+              path: p,
+              is_dir,
+              size: 0,
+              modified: 0,
+              file_type: '',
+              is_readonly: false,
+            });
+          }
+          const cb: ClipboardState = {
+            files,
+            operation: detail.operation === 'move' ? 'cut' : 'copy',
+          };
+          await runPasteRef.current(cb, detail.targetPath);
+        } finally {
+          processingDropRef.current = false;
+        }
+      })();
+    };
+    window.addEventListener('xplorer-file-drop', handler);
+    return () => window.removeEventListener('xplorer-file-drop', handler);
+  }, []);
 
   // ── Context-menu action bag ────────────────────────────────────────────
 

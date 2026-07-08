@@ -412,7 +412,7 @@ const FileGridItem = React.memo(
         tabIndex={
           isSelected || (selectedFiles.size === 0 && allFiles[0]?.path === file.path) ? 0 : -1
         }
-        className={`cursor-pointer rounded-lg transition-colors duration-150 ${
+        className={`cursor-pointer select-none rounded-lg transition-colors duration-150 ${
           isSelected
             ? 'bg-xp-blue/20 ring-xp-blue/80 border-xp-blue border ring-2'
             : 'hover:bg-xp-surface-light border border-transparent'

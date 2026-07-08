@@ -14,14 +14,19 @@ const DRAG_THRESHOLD = 5; // pixels before drag starts
 
 let _dragIconPath: string | null = null;
 const getDragIconPath = async (): Promise<string> => {
-  if (_dragIconPath) return _dragIconPath;
+  if (_dragIconPath !== null) return _dragIconPath;
   try {
     _dragIconPath = await resolveResource('icons/icon.png');
-  } catch {
+  } catch (err) {
+    console.error('Failed to resolve drag icon resource:', err);
     _dragIconPath = '';
   }
   return _dragIconPath;
 };
+
+// Warm the icon path at module load so the very first drag has a valid icon.
+// tauri-plugin-drag requires a non-empty image path on Windows.
+void getDragIconPath();
 
 /**
  * Native drag hook using tauri-plugin-drag.
@@ -32,7 +37,7 @@ const getDragIconPath = async (): Promise<string> => {
 export const useDraggable = ({ file, selectedFiles, allFiles }: UseDraggableOptions) => {
   const mouseDownRef = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef(false);
-  const { startInternalDrag } = useDragDropContext();
+  const { startInternalDrag, endDrag } = useDragDropContext();
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return; // only left button
@@ -59,19 +64,32 @@ export const useDraggable = ({ file, selectedFiles, allFiles }: UseDraggableOpti
         pathsToDrag = [file.path];
       }
 
-      // Notify context this is an internal drag (default: move operation)
+      // Notify context this is an internal drag (default operation: move).
       startInternalDrag(pathsToDrag);
 
+      // Always advertise COPY as the native OS effect. Our OWN window (WebView2)
+      // is the drop target for internal drags and requests COPY by default; if we
+      // advertised MOVE only, Windows would show the "not allowed" cursor and
+      // reject the drop. The ACTUAL copy-vs-move is decided by DragDropContext
+      // from the live Ctrl state at drop time (Ctrl during the drag => copy),
+      // independent of this OS effect.
       // Start native Tauri drag — OS handles visuals + drop
       // When dropped back in our window, onDragDropEvent fires
       // When dropped on desktop/another app, OS handles it
       getDragIconPath().then((icon) => {
-        startDrag({ item: pathsToDrag, icon }).catch((err) => {
-          console.error('startDrag failed:', err);
-        });
+        startDrag({ item: pathsToDrag, icon, mode: 'copy' })
+          .catch((err) => {
+            console.error('startDrag failed:', err);
+          })
+          .finally(() => {
+            // The native drag has fully ended (dropped or cancelled). Reset any
+            // lingering drag state — for drops OUTSIDE our window no Tauri
+            // drag-drop event fires, so this is the only reliable reset point.
+            endDrag();
+          });
       });
     },
-    [file.path, selectedFiles, allFiles, startInternalDrag],
+    [file.path, selectedFiles, allFiles, startInternalDrag, endDrag],
   );
 
   const onMouseUp = useCallback(() => {
