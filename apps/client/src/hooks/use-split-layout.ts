@@ -111,6 +111,17 @@ const simplifyTree = (node: SplitNode): SplitNode => {
   return { ...node, children: simplified };
 };
 
+/**
+ * Normalize a path for equality comparison so tabs opened for the same folder
+ * from different sources (favorites, file list, navigation) dedupe reliably.
+ * Case-insensitive and agnostic to separator style and trailing slashes.
+ */
+const normalizePathForCompare = (p: string): string =>
+  p
+    .replace(/[\\/]+/g, '/')
+    .replace(/\/+$/, '')
+    .toLowerCase();
+
 // ── Reducer ──────────────────────────────────────────────────────────────────
 
 const splitLayoutReducer = (
@@ -229,7 +240,10 @@ const splitLayoutReducer = (
       if (!group) return state;
 
       const exists = group.tabs.find(
-        (t) => t.id === tab.id || (tab.path !== 'xplorer://home' && t.path === tab.path),
+        (t) =>
+          t.id === tab.id ||
+          (tab.path !== 'xplorer://home' &&
+            normalizePathForCompare(t.path) === normalizePathForCompare(tab.path)),
       );
       if (exists) {
         // Tab already open (same id, or same folder/file path) — switch to it
