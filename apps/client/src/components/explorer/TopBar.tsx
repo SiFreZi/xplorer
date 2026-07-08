@@ -483,6 +483,13 @@ const TopBar = React.memo(
                         : 'hover:bg-xp-surface-light'
                     }`}
                     onClick={() => onSwitchTab?.(tab.id)}
+                    onAuxClick={(e) => {
+                      // Middle-click closes the tab (unless it's the last one).
+                      if (e.button === 1 && tabs.length > 1) {
+                        e.preventDefault();
+                        onCloseTab?.(tab.id);
+                      }
+                    }}
                   >
                     <TabIcon size={13} className="text-xp-text-secondary mr-1.5 flex-shrink-0" />
                     <span className="truncate text-xs font-medium">{tab.name}</span>

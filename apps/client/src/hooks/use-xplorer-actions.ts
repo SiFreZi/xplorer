@@ -403,6 +403,7 @@ export const useXplorerActions = (deps: XplorerActionsDeps) => {
       onAdvancedSelection: () => dialogManagerRef.current.setShowAdvancedSelect(true),
       onQuickLook: handleQuickLook,
       renameFileInline: fileOps.renameFileInline,
+      openInNewTab: fileOps.contextMenuActions.openInNewTab,
       onFilesChange: (newFiles: FileEntry[], newRefetch: () => void) => {
         setPaneFiles(newFiles);
         paneRefetchRef.current = newRefetch;
@@ -433,6 +434,7 @@ export const useXplorerActions = (deps: XplorerActionsDeps) => {
       refetch,
       handleQuickLook,
       fileOps.renameFileInline,
+      fileOps.contextMenuActions.openInNewTab,
     ],
   );
 

@@ -496,6 +496,13 @@ const PaneTabBar = ({
               }}
               onContextMenu={(e) => handleContextMenu(e, tab.id)}
               onClick={() => onSwitchTab(tab.id)}
+              onAuxClick={(e) => {
+                // Middle-click closes the tab (unless pinned or it's the last tab).
+                if (e.button === 1 && !isPinned && tabs.length > 1) {
+                  e.preventDefault();
+                  onCloseTab(tab.id);
+                }
+              }}
               style={{
                 position: 'relative',
                 display: 'flex',

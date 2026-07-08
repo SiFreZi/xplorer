@@ -42,6 +42,7 @@ const ColumnFileRow = React.memo(
         role="option"
         aria-selected={isActive || isSelected}
         tabIndex={0}
+        data-file-path={file.path}
         onMouseDown={dragHandlers.onMouseDown}
         onMouseMove={dragHandlers.onMouseMove}
         onMouseUp={dragHandlers.onMouseUp}
