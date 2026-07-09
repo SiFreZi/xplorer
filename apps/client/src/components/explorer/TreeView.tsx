@@ -3,7 +3,7 @@ import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
 import { getFolderColorHex } from '@/lib/folder-colors';
-
+import { useWindowEvent } from '@/hooks/use-window-event';
 interface TreeItemRowProps {
   file: FileEntry;
   depth: number;
@@ -16,6 +16,8 @@ interface TreeItemRowProps {
   onFileDoubleClick: (file: FileEntry) => void;
   onFileRightClick: (file: FileEntry, e: React.MouseEvent) => void;
   onFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
+  // Bumped when folder colors change so React.memo re-renders the row.
+  folderColorVersion: number;
 }
 
 // Single tree row — isolated so useDraggable (a hook) is called per component
@@ -145,6 +147,10 @@ const TreeView = ({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [folderContents, setFolderContents] = useState<Map<string, FileEntry[]>>(new Map());
 
+  // Re-render rows when folder colors change (row is React.memo'd).
+  const [folderColorVersion, setFolderColorVersion] = useState(0);
+  useWindowEvent('folder-colors-changed', () => setFolderColorVersion((v) => v + 1));
+
   const toggleFolder = async (folderPath: string) => {
     setExpandedFolders((prev) => {
       const newSet = new Set(prev);
@@ -213,6 +219,7 @@ const TreeView = ({
         onFileDoubleClick={handleFileDoubleClick}
         onFileRightClick={handleFileRightClick}
         onFileMiddleClick={handleFileMiddleClick}
+        folderColorVersion={folderColorVersion}
       />
 
       {/* Show nested content if expanded */}

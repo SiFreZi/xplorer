@@ -4,6 +4,7 @@ import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
 import { getFolderColorHex } from '@/lib/folder-colors';
+import { useWindowEvent } from '@/hooks/use-window-event';
 
 interface ColumnData {
   path: string;
@@ -37,6 +38,8 @@ const ColumnFileRow = React.memo(
     onDoubleClick: () => void;
     onRightClick: (e: React.MouseEvent) => void;
     onMiddleClick: (e: React.MouseEvent) => void;
+    // Bumped when folder colors change so React.memo re-renders the row.
+    folderColorVersion: number;
   }) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
@@ -166,6 +169,7 @@ const VirtualizedColumnPane = ({
   handleFileDoubleClick,
   handleFileRightClick,
   handleFileMiddleClick,
+  folderColorVersion,
 }: {
   column: ColumnData;
   colIndex: number;
@@ -175,6 +179,7 @@ const VirtualizedColumnPane = ({
   handleFileDoubleClick: (file: FileEntry) => void;
   handleFileRightClick: (file: FileEntry, e: React.MouseEvent) => void;
   handleFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
+  folderColorVersion: number;
 }) => {
   const columnScrollRef = useRef<HTMLDivElement>(null);
   const needsVirtualization = column.files.length >= COLUMN_VIRTUALIZATION_THRESHOLD;
@@ -214,6 +219,7 @@ const VirtualizedColumnPane = ({
             onDoubleClick={() => handleFileDoubleClick(file)}
             onRightClick={(e) => handleFileRightClick(file, e)}
             onMiddleClick={(e) => handleFileMiddleClick(file, e)}
+            folderColorVersion={folderColorVersion}
           />
         ))}
         {column.files.length === 0 && (
@@ -277,6 +283,7 @@ const VirtualizedColumnPane = ({
                 onDoubleClick={() => handleFileDoubleClick(file)}
                 onRightClick={(e) => handleFileRightClick(file, e)}
                 onMiddleClick={(e) => handleFileMiddleClick(file, e)}
+                folderColorVersion={folderColorVersion}
               />
             </div>
           );
@@ -303,6 +310,10 @@ const ColumnView = ({
     { path: currentPath, files, selectedFile: null },
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Re-render rows when folder colors change (rows are React.memo'd).
+  const [folderColorVersion, setFolderColorVersion] = useState(0);
+  useWindowEvent('folder-colors-changed', () => setFolderColorVersion((v) => v + 1));
 
   useEffect(() => {
     setColumns([{ path: currentPath, files, selectedFile: null }]);
@@ -404,6 +415,7 @@ const ColumnView = ({
           handleFileDoubleClick={handleFileDoubleClick}
           handleFileRightClick={handleFileRightClick}
           handleFileMiddleClick={handleFileMiddleClick}
+          folderColorVersion={folderColorVersion}
         />
       ))}
 
