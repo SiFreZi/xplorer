@@ -14,6 +14,8 @@ interface SidebarFileTreeProps {
   navigateToPath: (path: string) => void;
   handleFileClick: (file: FileEntry) => void;
   handleFileRightClick?: (file: FileEntry, event: React.MouseEvent) => void;
+  /** Open a folder in a new tab (used by middle-click). */
+  openInNewTab?: (file: FileEntry) => void;
   getFileIcon: (file: FileEntry) => React.ReactNode;
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -24,6 +26,7 @@ const SidebarFileTree = ({
   navigateToPath,
   handleFileClick,
   handleFileRightClick,
+  openInNewTab,
   getFileIcon,
   collapsed,
   onToggleCollapsed,
@@ -161,6 +164,14 @@ const SidebarFileTree = ({
     }
   };
 
+  const handleItemAuxClick = (file: FileEntry, event: React.MouseEvent) => {
+    if (event.button === 1 && file.is_dir && openInNewTab) {
+      event.preventDefault();
+      event.stopPropagation();
+      openInNewTab(file);
+    }
+  };
+
   const renderFileItem = (file: FileEntry, depth: number = 0): React.ReactNode => {
     const isExpanded = expandedFolders.has(file.path);
     const isLoading = loadingFolders.has(file.path);
@@ -177,6 +188,11 @@ const SidebarFileTree = ({
           className={`hover:bg-xp-surface-light flex cursor-pointer items-center rounded px-1 py-1 text-xs transition-colors ${currentPath === file.path ? 'bg-xp-blue text-xp-blue border-xp-blue border-l-2 bg-opacity-25' : 'text-xp-text'} `}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => handleItemClick(file)}
+          onMouseDown={(e) => {
+            // Prevent middle-click autoscroll; opening happens on auxclick.
+            if (e.button === 1) e.preventDefault();
+          }}
+          onAuxClick={(e) => handleItemAuxClick(file, e)}
           onContextMenu={(e) => handleItemRightClick(file, e)}
         >
           <div className="flex min-w-0 flex-1 items-center space-x-1">
@@ -285,6 +301,25 @@ const SidebarFileTree = ({
                 aria-label={`Root drive ${rootPath}`}
                 className={`hover:bg-xp-surface-light flex cursor-pointer items-center rounded px-1 py-1 text-xs font-medium transition-colors ${currentPath === rootPath ? 'bg-xp-blue text-xp-blue border-xp-blue border-l-2 bg-opacity-25' : 'text-xp-text'} `}
                 onClick={() => navigateToPath(rootPath)}
+                onMouseDown={(e) => {
+                  // Prevent middle-click autoscroll; opening happens on auxclick.
+                  if (e.button === 1) e.preventDefault();
+                }}
+                onAuxClick={(e) => {
+                  if (e.button === 1 && openInNewTab) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openInNewTab({
+                      name: rootPath,
+                      path: rootPath,
+                      size: 0,
+                      modified: 0,
+                      is_dir: true,
+                      file_type: 'folder',
+                      is_readonly: false,
+                    });
+                  }
+                }}
               >
                 <button
                   className="hover:bg-xp-surface-light flex h-5 w-5 flex-shrink-0 items-center justify-center rounded p-0.5 transition-colors"
