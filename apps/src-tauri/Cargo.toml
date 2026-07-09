@@ -1,6 +1,6 @@
 [package]
 name = "xplorer"
-version = "0.99.4"
+version = "0.99.7"
 description = "A modern file explorer built with Tauri"
 authors = ["Justin Maximillian Kimlim"]
 license = "AGPL-3.0"
@@ -83,6 +83,13 @@ path = "src/main.rs"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

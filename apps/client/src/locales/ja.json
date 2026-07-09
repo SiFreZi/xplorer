@@ -159,6 +159,7 @@
     "unmarkForComparison": "比較マークを解除",
     "compareWithOther": "他のファイルと比較...",
     "openInTerminal": "ターミナルで開く",
+    "classicContextMenu": "クラシックコンテキストメニュー",
     "calculateFolderSize": "フォルダサイズを計算",
     "compareSelectedFolders": "選択したフォルダを比較",
     "compareFolders": "フォルダを比較...",

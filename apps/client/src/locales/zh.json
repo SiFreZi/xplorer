@@ -159,6 +159,7 @@
     "unmarkForComparison": "取消比较标记",
     "compareWithOther": "与其他文件比较...",
     "openInTerminal": "在终端中打开",
+    "classicContextMenu": "经典右键菜单",
     "calculateFolderSize": "计算文件夹大小",
     "compareSelectedFolders": "比较所选文件夹",
     "compareFolders": "比较文件夹...",

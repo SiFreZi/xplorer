@@ -60,6 +60,10 @@ export const openInTerminal = async (path: string): Promise<void> => {
   return await transport('open_in_terminal', { path });
 };
 
+export const showNativeContextMenu = async (dir: string, paths: string[]): Promise<void> => {
+  return await transport('show_native_context_menu', { dir, paths });
+};
+
 export const showOpenDialog = async (options: {
   multiple?: boolean;
   directory?: boolean;

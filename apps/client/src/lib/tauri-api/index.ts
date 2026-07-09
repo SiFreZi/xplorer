@@ -289,6 +289,7 @@ export class TauriAPI {
   static getCurrentShell = system.getCurrentShell;
   static openUrl = system.openUrl;
   static openInTerminal = system.openInTerminal;
+  static showNativeContextMenu = system.showNativeContextMenu;
   static listenToTerminalOutput = system.listenToTerminalOutput;
   static listenToEvent = system.listenToEvent;
   static getAppVersion = system.getAppVersion;
