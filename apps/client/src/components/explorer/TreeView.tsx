@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
@@ -15,6 +15,7 @@ interface TreeItemRowProps {
   onFileClick: (file: FileEntry, e: React.MouseEvent) => void;
   onFileDoubleClick: (file: FileEntry) => void;
   onFileRightClick: (file: FileEntry, e: React.MouseEvent) => void;
+  onFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
 }
 
 // Single tree row — isolated so useDraggable (a hook) is called per component
@@ -31,6 +32,7 @@ const TreeItemRow = React.memo(
     onFileClick,
     onFileDoubleClick,
     onFileRightClick,
+    onFileMiddleClick,
   }: TreeItemRowProps) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles: siblings });
@@ -50,7 +52,14 @@ const TreeItemRow = React.memo(
             : 'text-xp-text border border-transparent'
         } `}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
-        {...dragHandlers}
+        onMouseDown={(e) => {
+          // Middle-click on Windows triggers autoscroll; suppress it here so the
+          // auxclick handler can open the folder in a new tab cleanly.
+          if (e.button === 1) e.preventDefault();
+          dragHandlers.onMouseDown(e);
+        }}
+        onMouseMove={dragHandlers.onMouseMove}
+        onMouseUp={dragHandlers.onMouseUp}
         onClick={(e) => {
           if (file.is_dir) {
             onToggle(file.path);
@@ -59,6 +68,7 @@ const TreeItemRow = React.memo(
         }}
         onDoubleClick={() => onFileDoubleClick(file)}
         onContextMenu={(e) => onFileRightClick(file, e)}
+        onAuxClick={(e) => onFileMiddleClick(file, e)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') onFileDoubleClick(file);
           if (e.key === ' ') {
@@ -130,6 +140,7 @@ const TreeView = ({
   handleFileDoubleClick,
   handleFileRightClick,
   handleBackgroundRightClick,
+  openInNewTab,
 }: ViewComponentProps) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [folderContents, setFolderContents] = useState<Map<string, FileEntry[]>>(new Map());
@@ -161,6 +172,18 @@ const TreeView = ({
     }
   };
 
+  const handleFileMiddleClick = useCallback(
+    (file: FileEntry, event: React.MouseEvent) => {
+      if (event.button !== 1) return;
+      // Prevent the pane-level middle-click handler from also firing (it only
+      // knows about the current directory's files, not deeper tree levels).
+      event.preventDefault();
+      event.stopPropagation();
+      if (file.is_dir) openInNewTab?.(file);
+    },
+    [openInNewTab],
+  );
+
   // Sort files: directories first, then by name
   const sortedFiles = useMemo(
     () =>
@@ -189,6 +212,7 @@ const TreeView = ({
         onFileClick={handleFileClick}
         onFileDoubleClick={handleFileDoubleClick}
         onFileRightClick={handleFileRightClick}
+        onFileMiddleClick={handleFileMiddleClick}
       />
 
       {/* Show nested content if expanded */}
