@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
+import { getFolderColorHex } from '@/lib/folder-colors';
 
 interface ColumnData {
   path: string;
@@ -39,6 +40,7 @@ const ColumnFileRow = React.memo(
   }) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
+    const folderColorHex = file.is_dir ? getFolderColorHex(file.path) : null;
     return (
       <div
         role="option"
@@ -113,6 +115,19 @@ const ColumnFileRow = React.memo(
         >
           {getFileIcon(file)}
         </span>
+        {folderColorHex && (
+          <span
+            style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: folderColorHex,
+              flexShrink: 0,
+            }}
+            aria-hidden="true"
+          />
+        )}
         <span
           style={{
             flex: 1,

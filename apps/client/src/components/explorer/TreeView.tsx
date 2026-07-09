@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
 import { useDraggable } from '@/hooks/use-draggable';
+import { getFolderColorHex } from '@/lib/folder-colors';
 
 interface TreeItemRowProps {
   file: FileEntry;
@@ -33,6 +34,7 @@ const TreeItemRow = React.memo(
   }: TreeItemRowProps) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles: siblings });
+    const folderColorHex = file.is_dir ? getFolderColorHex(file.path) : null;
     return (
       <div
         role="treeitem"
@@ -97,6 +99,20 @@ const TreeItemRow = React.memo(
           {!file.is_dir && <div className="w-4 flex-shrink-0" />}
 
           <span className="mr-2 flex-shrink-0 text-sm">{getFileIcon(file)}</span>
+          {folderColorHex && (
+            <span
+              style={{
+                display: 'inline-block',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: folderColorHex,
+                flexShrink: 0,
+                marginRight: 4,
+              }}
+              aria-hidden="true"
+            />
+          )}
           <span className="file-entry-name flex-1 truncate">{file.name}</span>
         </div>
       </div>
