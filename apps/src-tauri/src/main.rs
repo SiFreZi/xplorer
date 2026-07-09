@@ -598,6 +598,7 @@ fn main() {
             operations::add_context_menu_entry,
             operations::remove_context_menu_entry,
             operations::get_shell_integration_status,
+            operations::show_native_context_menu,
             // File versioning operations
             file_versions::enable_versioning,
             file_versions::disable_versioning,

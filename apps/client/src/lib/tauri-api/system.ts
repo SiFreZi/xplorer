@@ -36,6 +36,9 @@ export const openUrl = async (url: string): Promise<void> => await transport('op
 export const openInTerminal = async (path: string): Promise<void> =>
   await transport('open_in_terminal', { path });
 
+export const showNativeContextMenu = async (dir: string, paths: string[]): Promise<void> =>
+  await transport('show_native_context_menu', { dir, paths });
+
 // ── Event listener operations ───────────────────────────────────────────────
 
 export const listenToTerminalOutput = async (

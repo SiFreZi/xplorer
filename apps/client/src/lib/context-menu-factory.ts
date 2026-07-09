@@ -2,9 +2,10 @@ import React from 'react';
 import i18n from '@/i18n';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ContextMenuItem } from '@/components/ui/ContextMenu';
-import { PATH_SEPARATOR } from '@/lib/constants';
+import { PATH_SEPARATOR, isWindows } from '@/lib/constants';
 import { isEditableFile } from '@/lib/editable-files';
 import { extensionHost } from '@/lib/extension-host';
+import { isTauri } from '@/lib/transport';
 import { getRecentEntries, type ClipboardEntry } from '@/hooks/use-clipboard-history';
 import type { SortField } from '@/lib/utils';
 import { shouldShowMenuItem } from '@/lib/context-menu-rules';
@@ -60,6 +61,7 @@ import {
   Palette,
   FolderSync,
   MoreHorizontal,
+  MousePointerClick,
   Fingerprint,
   type LucideIcon,
 } from 'lucide-react';
@@ -123,6 +125,7 @@ export interface ContextMenuAction {
   setSortOrder: (order: 'asc' | 'desc') => void;
   lockFile?: (file: FileEntry) => void;
   unlockFile?: (file: FileEntry) => void;
+  showNativeMenu: (dir: string, paths: string[]) => void;
 }
 
 export interface ContextMenuConfig {
@@ -882,6 +885,22 @@ export class ContextMenuFactory {
       });
     }
 
+    // Classic Windows shell context menu (native IContextMenu)
+    if (isWindows && isTauri()) {
+      const parentDir = file.path.slice(
+        0,
+        Math.max(file.path.lastIndexOf('/'), file.path.lastIndexOf('\\')),
+      );
+      const nativePaths = isMultiSelect ? selectedFilesList : [file.path];
+      items.push({ id: 'sep-classic-menu', label: '', separator: true });
+      items.push({
+        id: 'classic-context-menu',
+        label: i18n.t('contextMenu.classicContextMenu'),
+        icon: mi(MousePointerClick),
+        action: () => this.actions.showNativeMenu(parentDir || file.path, nativePaths),
+      });
+    }
+
     // Add actions from extension host
     const extensionItems = extensionHost.getContextMenuItems({
       file,
@@ -1143,6 +1162,17 @@ export class ContextMenuFactory {
         }
       },
     });
+
+    // Classic Windows shell context menu (native IContextMenu) for the folder background
+    if (isWindows && isTauri()) {
+      items.push({ id: 'sep-classic-menu', label: '', separator: true });
+      items.push({
+        id: 'classic-context-menu',
+        label: i18n.t('contextMenu.classicContextMenu'),
+        icon: mi(MousePointerClick),
+        action: () => this.actions.showNativeMenu(currentPath, []),
+      });
+    }
 
     // Add custom actions from extensions
     if (this.config.customActions && this.config.customActions.length > 0) {

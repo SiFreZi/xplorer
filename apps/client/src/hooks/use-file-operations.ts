@@ -542,6 +542,13 @@ export const useFileOperations = (deps: UseFileOperationsDeps) => {
           description: tRef.current('toast.terminalOpenedDesc', { path }),
         });
       },
+      showNativeMenu: async (dir: string, paths: string[]) => {
+        try {
+          await TauriAPI.showNativeContextMenu(dir, paths);
+        } catch (error) {
+          console.error('Failed to show native context menu:', error);
+        }
+      },
       openRecycleBin: async () => {
         try {
           await TauriAPI.openRecycleBin();
