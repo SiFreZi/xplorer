@@ -18,11 +18,12 @@ const DETAILS_VIRTUALIZATION_THRESHOLD = 200;
 type RowDensity = AppSettings['detailsRowDensity'];
 
 // Row height (px) used for virtualization + vertical padding/icon size classes.
-const ROW_DENSITY: Record<RowDensity, { height: number; pad: string; icon: string }> = {
-  compact: { height: 30, pad: 'py-1', icon: 'text-sm' },
-  normal: { height: 40, pad: 'py-2.5', icon: 'text-lg' },
-  comfortable: { height: 52, pad: 'py-4', icon: 'text-lg' },
-};
+const ROW_DENSITY: Record<RowDensity, { height: number; pad: string; icon: string; badge: string }> =
+  {
+    compact: { height: 24, pad: 'py-0.5', icon: 'text-sm', badge: 'py-0' },
+    normal: { height: 40, pad: 'py-2.5', icon: 'text-lg', badge: 'py-1' },
+    comfortable: { height: 52, pad: 'py-4', icon: 'text-lg', badge: 'py-1' },
+  };
 
 type FlatItem =
   | { type: 'header'; group: { name: string; count: number } }
@@ -44,6 +45,7 @@ interface FileRowProps {
   onCalculateFolderSize?: (path: string) => void;
   rowPadClass: string;
   iconSizeClass: string;
+  badgePadClass: string;
 }
 
 const FileRow = React.memo(
@@ -63,6 +65,7 @@ const FileRow = React.memo(
     onCalculateFolderSize,
     rowPadClass,
     iconSizeClass,
+    badgePadClass,
   }: FileRowProps) => {
     const { t } = useTranslation();
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
@@ -147,7 +150,7 @@ const FileRow = React.memo(
           })()}
         </div>
         <div className="text-xp-text-muted col-span-2 text-center text-xs">
-          <span className="bg-xp-surface inline-block rounded px-2 py-1 font-mono text-xs capitalize">
+          <span className={`bg-xp-surface inline-block rounded px-2 ${badgePadClass} font-mono text-xs capitalize`}>
             {file.is_dir ? t('common.folder') : file.file_type}
           </span>
         </div>
@@ -303,6 +306,7 @@ const DetailsView = (props: DetailsViewProps) => {
     onCalculateFolderSize: calculateFolderSize,
     rowPadClass: rowCfg.pad,
     iconSizeClass: rowCfg.icon,
+    badgePadClass: rowCfg.badge,
   };
 
   const renderFlatItem = (item: FlatItem) => {
