@@ -218,6 +218,7 @@ const LeftSidebar = forwardRef<LeftSidebarHandle, LeftSidebarProps>(function Lef
             navigateToPath={navigateToPath}
             handleFileClick={handleFileClick}
             handleFileRightClick={handleFileRightClick}
+            openInNewTab={openInNewTab}
             getFileIcon={getFileIcon}
             collapsed={sectionCollapsed.fileTree}
             onToggleCollapsed={() => toggleSection('fileTree')}
