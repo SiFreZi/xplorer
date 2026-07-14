@@ -373,7 +373,13 @@ const DetailsView = (props: DetailsViewProps) => {
         {header}
         <div className="divide-xp-border divide-y divide-opacity-30" role="rowgroup">
           {flatItems.map((item) => (
-            <div key={item.type === 'header' ? `group-${item.group.name}` : item.file.path}>
+            <div
+              key={item.type === 'header' ? `group-${item.group.name}` : item.file.path}
+              style={{
+                height: item.type === 'header' ? GROUP_HEADER_HEIGHT : rowCfg.height,
+                overflow: 'hidden',
+              }}
+            >
               {renderFlatItem(item)}
             </div>
           ))}
