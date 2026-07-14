@@ -71,6 +71,8 @@ import {
   setFolderColor,
   removeFolderColor,
 } from '@/lib/folder-colors';
+import { getEnabledCustomCommandsFor, type CustomCommand } from '@/lib/custom-commands';
+import { renderCustomCommandIcon } from '@/lib/custom-command-icons';
 export type { ContextMenuItem } from '@/components/ui/ContextMenu';
 
 // Helper to create a context menu icon element
@@ -126,6 +128,7 @@ export interface ContextMenuAction {
   lockFile?: (file: FileEntry) => void;
   unlockFile?: (file: FileEntry) => void;
   showNativeMenu: (dir: string, paths: string[]) => void;
+  runCustomCommand: (command: CustomCommand, file: FileEntry) => void;
 }
 
 export interface ContextMenuConfig {
@@ -268,6 +271,28 @@ export class ContextMenuFactory {
           icon: mi(Pencil),
           action: () => this.actions.openInEditor(file),
         });
+      }
+
+      // User-defined custom commands (e.g. open a folder in VS Code / Fork).
+      // Guarded: a broken command/icon must never take down the whole menu.
+      try {
+        const customCommands = getEnabledCustomCommandsFor(file.is_dir ? 'folder' : 'file');
+        for (const cmd of customCommands) {
+          let iconNode: React.ReactNode;
+          try {
+            iconNode = renderCustomCommandIcon(cmd.icon, 14);
+          } catch {
+            iconNode = mi(ExternalLink);
+          }
+          items.push({
+            id: `custom-cmd-${cmd.id}`,
+            label: cmd.label,
+            icon: iconNode,
+            action: () => this.actions.runCustomCommand(cmd, file),
+          });
+        }
+      } catch (err) {
+        console.error('Failed to add custom commands to context menu:', err);
       }
 
       items.push({ id: 'sep1', label: '', separator: true });

@@ -36,6 +36,7 @@ import BackupRestoreSettings from '@/components/settings/BackupRestoreSettings';
 import AuditLogSettings from '@/components/settings/AuditLogSettings';
 import VersioningSettings from '@/components/settings/VersioningSettings';
 import ContextMenuRulesCard from '@/components/settings/ContextMenuRulesCard';
+import CustomCommandsCard from '@/components/settings/CustomCommandsCard';
 import ShortcutsSettingsPanel from '@/components/settings/ShortcutsSettings';
 import GeneralSettings from '@/components/settings/GeneralSettings';
 import ExplorerSettings from '@/components/settings/ExplorerSettings';
@@ -344,7 +345,12 @@ const Settings = () => {
       case 'file-associations':
         return <FileAssociationsSettings />;
       case 'context-menu':
-        return <ContextMenuRulesCard />;
+        return (
+          <div className="space-y-6">
+            <ContextMenuRulesCard />
+            <CustomCommandsCard />
+          </div>
+        );
       case 'ai':
         return (
           <AISettings

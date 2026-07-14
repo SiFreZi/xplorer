@@ -151,6 +151,10 @@ vi.mock('@/components/settings/ContextMenuRulesCard', () => ({
   default: () => <div data-testid="context-menu-rules">Context Menu Rules</div>,
 }));
 
+vi.mock('@/components/settings/CustomCommandsCard', () => ({
+  default: () => <div data-testid="custom-commands">Custom Commands</div>,
+}));
+
 import Settings from '@/pages/settings';
 
 /** Helper to click a sidebar tab by label text */

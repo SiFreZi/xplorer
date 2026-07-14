@@ -29,6 +29,9 @@ export const executeCommand = async (
 export const executeCommandStream = async (command: string, workingDir: string): Promise<void> =>
   await transport('execute_command_stream', { command, workingDir });
 
+export const spawnDetachedCommand = async (command: string, workingDir: string): Promise<void> =>
+  await transport('spawn_detached_command', { command, workingDir });
+
 export const getCurrentShell = async (): Promise<string> => await transport('get_current_shell');
 
 export const openUrl = async (url: string): Promise<void> => await transport('open_url', { url });
