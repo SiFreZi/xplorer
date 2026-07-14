@@ -66,7 +66,7 @@ const SidebarCollections = ({
       >
         <div className="flex items-center justify-between">
           <button
-            className="text-xp-text-muted hover:bg-xp-surface-light/50 flex flex-1 items-center px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+            className="text-xp-text-secondary hover:bg-xp-surface-light/50 flex flex-1 items-center px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors"
             onClick={onToggleCollapsed}
             aria-expanded={!collapsed}
             aria-label="Toggle collections"

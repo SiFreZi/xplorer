@@ -80,7 +80,7 @@ const SidebarQuickAccess = ({
       data-sidebar-section="quickAccess"
     >
       <button
-        className="text-xp-text-muted hover:bg-xp-surface-light/50 flex w-full items-center px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+        className="text-xp-text-secondary hover:bg-xp-surface-light/50 flex w-full items-center px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors"
         onClick={onToggleCollapsed}
         aria-expanded={!collapsed}
       >
