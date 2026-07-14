@@ -432,19 +432,25 @@ fn build_shell_command(command: &str) -> std::process::Command {
     }
 }
 
-fn walk_files(root: &PathBuf, out: &mut Vec<PathBuf>) -> Result<(), String> {
-    let entries = std::fs::read_dir(root)
-        .map_err(|e| format!("Failed to read directory {}: {}", root.display(), e))?;
-    for entry in entries {
-        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+/// Recursively collect every file under `root`.
+///
+/// This is intentionally resilient: directories or entries that cannot be read
+/// (permission denied, Windows MAX_PATH overflow, broken symlinks, …) are
+/// skipped instead of aborting the whole walk, so a single unreadable subfolder
+/// no longer wipes out the entire result set.
+fn walk_files(root: &PathBuf, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+    for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_dir() {
-            walk_files(&path, out)?;
-        } else if path.is_file() {
-            out.push(path);
+        // Use the entry's file type to avoid a follow-symlink stat that could loop.
+        match entry.file_type() {
+            Ok(ft) if ft.is_dir() => walk_files(&path, out),
+            Ok(ft) if ft.is_file() => out.push(path),
+            _ => {}
         }
     }
-    Ok(())
 }
 
 #[command]
@@ -632,6 +638,53 @@ pub async fn execute_command_stream(
             .map_err(|e| format!("Failed to emit terminal output: {}", e))?;
     }
     Ok(())
+}
+
+/// Launch a command detached (fire-and-forget) without waiting for it to exit.
+///
+/// Used for user-defined "open with" commands that start GUI apps (VS Code,
+/// Fork, …) which stay open — blocking on `.output()` would hang until they
+/// close. Metacharacter sanitisation still applies, so a malicious file name
+/// cannot inject a second command.
+#[command]
+pub async fn spawn_detached_command(command: String, working_dir: String) -> Result<(), String> {
+    let working_dir_path = std::path::Path::new(&working_dir);
+    if !working_dir_path.exists() || !working_dir_path.is_dir() {
+        return Err("Working directory does not exist or is not a directory".to_string());
+    }
+
+    // Validate command against the same metacharacter rules as execute_command.
+    sanitize_command(&command)?;
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let mut cmd = std::process::Command::new("cmd");
+        cmd.current_dir(working_dir_path);
+        // Pass the command verbatim via raw_arg: Rust's normal arg quoting would
+        // backslash-escape the inner quotes (`\"`), which cmd.exe does not
+        // understand. We wrap the whole command in one extra pair of quotes so
+        // cmd's `/C` rule strips only those outer quotes, leaving a correctly
+        // quoted `"C:\path\app.exe" "C:\arg"` for execution.
+        cmd.raw_arg(format!("/C \"{}\"", command));
+        // CREATE_NO_WINDOW: don't flash a console window for the launcher shell.
+        cmd.creation_flags(0x0800_0000);
+        // spawn() returns immediately; the Child handle is dropped so the
+        // launched process keeps running independently of Xplorer.
+        return cmd
+            .spawn()
+            .map(|_child| ())
+            .map_err(|e| format!("Failed to launch command: {}", e));
+    }
+
+    #[cfg(not(windows))]
+    {
+        let mut cmd = build_shell_command(&command);
+        cmd.current_dir(working_dir_path);
+        cmd.spawn()
+            .map(|_child| ())
+            .map_err(|e| format!("Failed to launch command: {}", e))
+    }
 }
 
 #[cfg(test)]
@@ -850,7 +903,7 @@ pub async fn find_files(pattern: String, search_path: String) -> Result<Vec<Stri
 
     tokio::task::spawn_blocking(move || {
         let mut files = Vec::new();
-        walk_files(&root, &mut files)?;
+        walk_files(&root, &mut files);
 
         let pattern_lower = pattern.to_lowercase();
         Ok(files
@@ -884,7 +937,7 @@ pub async fn search_in_files(
 
     tokio::task::spawn_blocking(move || {
         let mut files = Vec::new();
-        walk_files(&root, &mut files)?;
+        walk_files(&root, &mut files);
 
         let pattern_lower = pattern.to_lowercase();
         let mut matches = Vec::new();

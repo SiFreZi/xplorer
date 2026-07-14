@@ -6,6 +6,7 @@ import { showConfirmationToast, showInputToast } from '@/components/ui/Toast';
 import type { BatchOperationType } from '@/components/dialogs/BatchConfirmDialog';
 import { invertSelection } from '@/extensions/advanced-selection/selection-utils';
 import { ContextMenuFactory, type ContextMenuAction } from '@/lib/context-menu-factory';
+import { buildCommandInvocation, type CustomCommand } from '@/lib/custom-commands';
 import type { TabItem } from '@/types/split-view';
 import type { ClipboardEntry } from '@/hooks/use-clipboard-history';
 import {
@@ -544,6 +545,19 @@ export const useFileOperations = (deps: UseFileOperationsDeps) => {
       },
       openWith: (file: FileEntry) => {
         dialogsRef.current.openOpenWithDialog(file.path);
+      },
+      runCustomCommand: async (command: CustomCommand, file: FileEntry) => {
+        const { command: cmdStr, workingDir } = buildCommandInvocation(command, file);
+        try {
+          // Detached launch: don't wait for the process (GUI apps stay open).
+          await TauriAPI.spawnDetachedCommand(cmdStr, workingDir);
+        } catch (error) {
+          toastRef.current({
+            variant: 'destructive',
+            title: tRef.current('toast.customCommandFailed', { label: command.label }),
+            description: formatError(error),
+          });
+        }
       },
       compressTo: (filesToCompress: FileEntry[]) => {
         dialogsRef.current.openCompressDialog(filesToCompress);

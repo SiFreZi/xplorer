@@ -285,6 +285,7 @@ fn main() {
             operations::open_in_terminal,
             operations::execute_command,
             operations::execute_command_stream,
+            operations::spawn_detached_command,
             operations::get_current_shell,
             operations::find_files,
             operations::search_in_files,
