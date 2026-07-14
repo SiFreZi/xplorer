@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
+import { highlightName } from './FileGridHelpers';
+import { InlineRenameInput } from './FileGridItem';
 import { useDraggable } from '@/hooks/use-draggable';
 import { getFolderColorHex } from '@/lib/folder-colors';
 import { useWindowEvent } from '@/hooks/use-window-event';
@@ -18,6 +20,11 @@ interface TreeItemRowProps {
   onFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
   // Bumped when folder colors change so React.memo re-renders the row.
   folderColorVersion: number;
+  filterQuery?: string;
+  renamingPath?: string | null;
+  onRenameConfirm?: (oldPath: string, newName: string) => void;
+  onRenameCancel?: () => void;
+  onRenameTab?: (oldPath: string, newName: string) => void;
 }
 
 // Single tree row — isolated so useDraggable (a hook) is called per component
@@ -35,10 +42,17 @@ const TreeItemRow = React.memo(
     onFileDoubleClick,
     onFileRightClick,
     onFileMiddleClick,
+    filterQuery,
+    renamingPath,
+    onRenameConfirm,
+    onRenameCancel,
+    onRenameTab,
   }: TreeItemRowProps) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles: siblings });
     const folderColorHex = file.is_dir ? getFolderColorHex(file.path) : null;
+    const isRenaming = renamingPath === file.path;
+    const existingNames = siblings.map((f) => f.name);
     return (
       <div
         role="treeitem"
@@ -55,23 +69,28 @@ const TreeItemRow = React.memo(
         } `}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
         onMouseDown={(e) => {
+          if (isRenaming) return;
           // Middle-click on Windows triggers autoscroll; suppress it here so the
           // auxclick handler can open the folder in a new tab cleanly.
           if (e.button === 1) e.preventDefault();
           dragHandlers.onMouseDown(e);
         }}
-        onMouseMove={dragHandlers.onMouseMove}
-        onMouseUp={dragHandlers.onMouseUp}
+        onMouseMove={isRenaming ? undefined : dragHandlers.onMouseMove}
+        onMouseUp={isRenaming ? undefined : dragHandlers.onMouseUp}
         onClick={(e) => {
+          if (isRenaming) return;
           if (file.is_dir) {
             onToggle(file.path);
           }
           onFileClick(file, e);
         }}
-        onDoubleClick={() => onFileDoubleClick(file)}
+        onDoubleClick={() => {
+          if (!isRenaming) onFileDoubleClick(file);
+        }}
         onContextMenu={(e) => onFileRightClick(file, e)}
         onAuxClick={(e) => onFileMiddleClick(file, e)}
         onKeyDown={(e) => {
+          if (isRenaming) return;
           if (e.key === 'Enter') onFileDoubleClick(file);
           if (e.key === ' ') {
             e.preventDefault();
@@ -125,7 +144,22 @@ const TreeItemRow = React.memo(
               aria-hidden="true"
             />
           )}
-          <span className="file-entry-name flex-1 truncate">{file.name}</span>
+          {isRenaming && onRenameConfirm && onRenameCancel && onRenameTab ? (
+            <InlineRenameInput
+              fileName={file.name}
+              isDir={file.is_dir}
+              isListView
+              existingNames={existingNames}
+              onConfirm={onRenameConfirm}
+              onCancel={onRenameCancel}
+              onTab={onRenameTab}
+              filePath={file.path}
+            />
+          ) : (
+            <span className="file-entry-name flex-1 truncate">
+              {highlightName(file.name, filterQuery)}
+            </span>
+          )}
         </div>
       </div>
     );
@@ -143,6 +177,11 @@ const TreeView = ({
   handleFileRightClick,
   handleBackgroundRightClick,
   openInNewTab,
+  filterQuery,
+  renamingPath,
+  onRenameConfirm,
+  onRenameCancel,
+  onRenameTab,
 }: ViewComponentProps) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [folderContents, setFolderContents] = useState<Map<string, FileEntry[]>>(new Map());
@@ -220,6 +259,11 @@ const TreeView = ({
         onFileRightClick={handleFileRightClick}
         onFileMiddleClick={handleFileMiddleClick}
         folderColorVersion={folderColorVersion}
+        filterQuery={filterQuery}
+        renamingPath={renamingPath}
+        onRenameConfirm={onRenameConfirm}
+        onRenameCancel={onRenameCancel}
+        onRenameTab={onRenameTab}
       />
 
       {/* Show nested content if expanded */}

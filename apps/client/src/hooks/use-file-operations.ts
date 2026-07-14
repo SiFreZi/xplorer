@@ -399,35 +399,12 @@ export const useFileOperations = (deps: UseFileOperationsDeps) => {
           if (result) await doDelete();
         }
       },
-      rename: async (file: FileEntry) => {
-        const newName = await showInputToast({
-          title: 'Rename',
-          description: 'Enter new name:',
-          placeholder: file.name,
-          submitText: 'Rename',
-          cancelText: 'Cancel',
-        });
-        if (newName && newName !== file.name) {
-          try {
-            const pathParts = file.path.split(/[\\/]/);
-            pathParts[pathParts.length - 1] = newName;
-            const newPath = pathParts.join(PATH_SEPARATOR);
-            await TauriAPI.rename(file.path, newPath);
-            emitFileActivityRef.current('file-renamed', newPath, newName, file.path);
-            emitFilesChangedRef.current();
-            toastRef.current({
-              title: tRef.current('toast.renamed'),
-              description: tRef.current('toast.renamedDesc', { name: newName }),
-            });
-          } catch (error) {
-            console.error('Rename operation failed:', error);
-            toastRef.current({
-              title: tRef.current('toast.renameFailed'),
-              description: tRef.current('toast.renameFailedDesc', { error: formatError(error) }),
-              variant: 'destructive',
-            });
-          }
-        }
+      rename: (file: FileEntry) => {
+        // Windows-Explorer-style inline rename: FileGrid listens for this event,
+        // sets renamingPath and renders the inline input (no modal popup).
+        window.dispatchEvent(
+          new CustomEvent('start-inline-rename', { detail: { path: file.path } }),
+        );
       },
       createFolder: async (parentPath: string) => {
         const folderName = await showInputToast({

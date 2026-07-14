@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, TauriAPI } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
+import { highlightName } from './FileGridHelpers';
+import { InlineRenameInput } from './FileGridItem';
 import { useDraggable } from '@/hooks/use-draggable';
 import { getFolderColorHex } from '@/lib/folder-colors';
 import { useWindowEvent } from '@/hooks/use-window-event';
@@ -27,6 +29,11 @@ const ColumnFileRow = React.memo(
     onDoubleClick,
     onRightClick,
     onMiddleClick,
+    filterQuery,
+    renamingPath,
+    onRenameConfirm,
+    onRenameCancel,
+    onRenameTab,
   }: {
     file: FileEntry;
     isActive: boolean;
@@ -40,10 +47,17 @@ const ColumnFileRow = React.memo(
     onMiddleClick: (e: React.MouseEvent) => void;
     // Bumped when folder colors change so React.memo re-renders the row.
     folderColorVersion: number;
+    filterQuery?: string;
+    renamingPath?: string | null;
+    onRenameConfirm?: (oldPath: string, newName: string) => void;
+    onRenameCancel?: () => void;
+    onRenameTab?: (oldPath: string, newName: string) => void;
   }) => {
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
     const folderColorHex = file.is_dir ? getFolderColorHex(file.path) : null;
+    const isRenaming = renamingPath === file.path;
+    const existingNames = allFiles.map((f) => f.name);
     return (
       <div
         role="option"
@@ -51,18 +65,20 @@ const ColumnFileRow = React.memo(
         tabIndex={0}
         data-file-path={file.path}
         onMouseDown={(e) => {
+          if (isRenaming) return;
           // Middle-click on Windows triggers autoscroll; suppress it here so the
           // auxclick handler can open the folder in a new tab cleanly.
           if (e.button === 1) e.preventDefault();
           dragHandlers.onMouseDown(e);
         }}
-        onMouseMove={dragHandlers.onMouseMove}
-        onMouseUp={dragHandlers.onMouseUp}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
+        onMouseMove={isRenaming ? undefined : dragHandlers.onMouseMove}
+        onMouseUp={isRenaming ? undefined : dragHandlers.onMouseUp}
+        onClick={isRenaming ? undefined : onClick}
+        onDoubleClick={isRenaming ? undefined : onDoubleClick}
         onContextMenu={onRightClick}
         onAuxClick={onMiddleClick}
         onKeyDown={(e) => {
+          if (isRenaming) return;
           if (e.key === 'Enter') onDoubleClick();
         }}
         style={{
@@ -139,7 +155,20 @@ const ColumnFileRow = React.memo(
             whiteSpace: 'nowrap',
           }}
         >
-          {file.name}
+          {isRenaming && onRenameConfirm && onRenameCancel && onRenameTab ? (
+            <InlineRenameInput
+              fileName={file.name}
+              isDir={file.is_dir}
+              isListView
+              existingNames={existingNames}
+              onConfirm={onRenameConfirm}
+              onCancel={onRenameCancel}
+              onTab={onRenameTab}
+              filePath={file.path}
+            />
+          ) : (
+            highlightName(file.name, filterQuery)
+          )}
         </span>
         {file.is_dir && (
           <span
@@ -170,6 +199,11 @@ const VirtualizedColumnPane = ({
   handleFileRightClick,
   handleFileMiddleClick,
   folderColorVersion,
+  filterQuery,
+  renamingPath,
+  onRenameConfirm,
+  onRenameCancel,
+  onRenameTab,
 }: {
   column: ColumnData;
   colIndex: number;
@@ -180,6 +214,11 @@ const VirtualizedColumnPane = ({
   handleFileRightClick: (file: FileEntry, e: React.MouseEvent) => void;
   handleFileMiddleClick: (file: FileEntry, e: React.MouseEvent) => void;
   folderColorVersion: number;
+  filterQuery?: string;
+  renamingPath?: string | null;
+  onRenameConfirm?: (oldPath: string, newName: string) => void;
+  onRenameCancel?: () => void;
+  onRenameTab?: (oldPath: string, newName: string) => void;
 }) => {
   const columnScrollRef = useRef<HTMLDivElement>(null);
   const needsVirtualization = column.files.length >= COLUMN_VIRTUALIZATION_THRESHOLD;
@@ -220,6 +259,11 @@ const VirtualizedColumnPane = ({
             onRightClick={(e) => handleFileRightClick(file, e)}
             onMiddleClick={(e) => handleFileMiddleClick(file, e)}
             folderColorVersion={folderColorVersion}
+            filterQuery={filterQuery}
+            renamingPath={renamingPath}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
+            onRenameTab={onRenameTab}
           />
         ))}
         {column.files.length === 0 && (
@@ -284,6 +328,11 @@ const VirtualizedColumnPane = ({
                 onRightClick={(e) => handleFileRightClick(file, e)}
                 onMiddleClick={(e) => handleFileMiddleClick(file, e)}
                 folderColorVersion={folderColorVersion}
+                filterQuery={filterQuery}
+                renamingPath={renamingPath}
+                onRenameConfirm={onRenameConfirm}
+                onRenameCancel={onRenameCancel}
+                onRenameTab={onRenameTab}
               />
             </div>
           );
@@ -305,6 +354,11 @@ const ColumnView = ({
   getFileIcon,
   formatFileSize,
   formatDate,
+  filterQuery,
+  renamingPath,
+  onRenameConfirm,
+  onRenameCancel,
+  onRenameTab,
 }: ViewComponentProps) => {
   const [columns, setColumns] = useState<ColumnData[]>([
     { path: currentPath, files, selectedFile: null },
@@ -416,6 +470,11 @@ const ColumnView = ({
           handleFileRightClick={handleFileRightClick}
           handleFileMiddleClick={handleFileMiddleClick}
           folderColorVersion={folderColorVersion}
+          filterQuery={filterQuery}
+          renamingPath={renamingPath}
+          onRenameConfirm={onRenameConfirm}
+          onRenameCancel={onRenameCancel}
+          onRenameTab={onRenameTab}
         />
       ))}
 

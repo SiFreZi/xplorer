@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { FileEntry, FolderSizeInfo, FileTag, TauriAPI } from '@/lib/tauri-api';
 import { useDroppable } from '@/hooks/use-droppable';
 import { useGridLayout } from '@/hooks/use-grid-layout';
-import { useTypeAheadSearch } from '@/hooks/use-type-ahead-search';
 import { useGridKeyboardNav } from '@/hooks/use-grid-keyboard-nav';
 import { useSizePercentiles } from '@/hooks/use-size-percentiles';
 import { useThumbnailCache } from '@/hooks/use-thumbnail-cache';
@@ -53,6 +52,8 @@ interface FileGridProps {
   renamingPath?: string | null;
   /** Setter to clear/set the renaming path from parent */
   setRenamingPath?: (path: string | null) => void;
+  /** Active type-to-filter query, used to highlight matching letters in names. */
+  filterQuery?: string;
 }
 
 const FileGrid = ({
@@ -81,6 +82,7 @@ const FileGrid = ({
   onRenameFile,
   renamingPath: externalRenamingPath,
   setRenamingPath: externalSetRenamingPath,
+  filterQuery,
 }: FileGridProps) => {
   const { t } = useTranslation();
 
@@ -447,16 +449,7 @@ const FileGrid = ({
     enabled: needsVirtualization,
   });
 
-  // ─── Keyboard grid navigation + type-ahead search ─────────────────────────
-  const { handleGridKeyDown: handleTypeAhead } = useTypeAheadSearch({
-    files,
-    viewMode,
-    needsVirtualization,
-    columns,
-    virtualizer,
-    getColumnsCount,
-  });
-
+  // ─── Keyboard grid navigation ─────────────────────────────────────────────
   const { handleKeyDown: handleGridNav } = useGridKeyboardNav({
     files,
     selectedFiles,
@@ -491,10 +484,8 @@ const FileGrid = ({
       if (renamingPath) return;
 
       handleGridNav(e);
-      // If the grid nav didn't consume it, try type-ahead
-      if (!e.defaultPrevented) handleTypeAhead(e);
     },
-    [handleGridNav, handleTypeAhead, onRenameFile, selectedFiles, renamingPath, setRenamingPath],
+    [handleGridNav, onRenameFile, selectedFiles, renamingPath, setRenamingPath],
   );
 
   if (isLoading) {
@@ -548,6 +539,12 @@ const FileGrid = ({
     getFolderSize,
     isCalculatingSize,
     calculateFolderSize,
+    filterQuery,
+    renamingPath,
+    existingNames,
+    onRenameConfirm: handleRenameConfirm,
+    onRenameCancel: handleRenameCancel,
+    onRenameTab: handleRenameTab,
   };
 
   if (viewMode === 'tree') {
@@ -629,6 +626,7 @@ const FileGrid = ({
           showSizeBadge={showSizeBadges}
           sizeBadgeInfo={sizePercentiles.get(file.path) || null}
           thumbnailUrl={isImageFile(file) ? getThumbnailUrl(file.path) : undefined}
+          filterQuery={filterQuery}
           isRenaming={isFileRenaming}
           existingNames={isFileRenaming ? existingNames : undefined}
           onRenameConfirm={isFileRenaming ? handleRenameConfirm : undefined}

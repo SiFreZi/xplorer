@@ -5,6 +5,7 @@ import { useDraggable } from '@/hooks/use-draggable';
 import { useDroppable } from '@/hooks/use-droppable';
 import { useThumbnailCache } from '@/hooks/use-thumbnail-cache';
 import { isImageFile } from './FileGridHelpers';
+import { InlineRenameInput } from './FileGridItem';
 import { ViewComponentProps } from './FileGridTypes';
 
 // Filmstrip thumbnail item
@@ -115,6 +116,10 @@ const GalleryView = ({
   handleFileDoubleClick,
   handleFileRightClick,
   handleBackgroundRightClick,
+  renamingPath,
+  onRenameConfirm,
+  onRenameCancel,
+  onRenameTab,
 }: ViewComponentProps) => {
   const [focusedFile, setFocusedFile] = useState<FileEntry | null>(null);
   const [previewError, setPreviewError] = useState(false);
@@ -354,7 +359,23 @@ const GalleryView = ({
         {/* File info overlay */}
         {displayFile && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-4 py-2">
-            <div className="truncate text-sm font-medium text-white">{displayFile.name}</div>
+            {renamingPath === displayFile.path &&
+            onRenameConfirm &&
+            onRenameCancel &&
+            onRenameTab ? (
+              <InlineRenameInput
+                fileName={displayFile.name}
+                isDir={displayFile.is_dir}
+                isListView
+                existingNames={files.map((f) => f.name)}
+                onConfirm={onRenameConfirm}
+                onCancel={onRenameCancel}
+                onTab={onRenameTab}
+                filePath={displayFile.path}
+              />
+            ) : (
+              <div className="truncate text-sm font-medium text-white">{displayFile.name}</div>
+            )}
             <div className="text-xs text-white/70">
               {displayFile.is_dir ? 'Folder' : formatFileSize(displayFile.size)}
               {displayFile.modified > 0 && <> &middot; {formatDate(displayFile.modified)}</>}
@@ -422,7 +443,10 @@ const GalleryView = ({
                       handleFileClick(file, e);
                     }}
                     onDoubleClick={() => handleFileDoubleClick(file)}
-                    onRightClick={(e) => handleFileRightClick(file, e)}
+                    onRightClick={(e) => {
+                      setFocusedFile(file);
+                      handleFileRightClick(file, e);
+                    }}
                   />
                 </div>
               );

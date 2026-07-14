@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FileEntry, FolderSizeInfo } from '@/lib/tauri-api';
 import { ViewComponentProps } from './FileGridTypes';
+import { highlightName } from './FileGridHelpers';
+import { InlineRenameInput } from './FileGridItem';
 import { useDraggable } from '@/hooks/use-draggable';
 import { useSetting } from '@/hooks/use-app-settings';
 import type { AppSettings } from '@/lib/app-settings';
@@ -18,12 +20,14 @@ const DETAILS_VIRTUALIZATION_THRESHOLD = 200;
 type RowDensity = AppSettings['detailsRowDensity'];
 
 // Row height (px) used for virtualization + vertical padding/icon size classes.
-const ROW_DENSITY: Record<RowDensity, { height: number; pad: string; icon: string; badge: string }> =
-  {
-    compact: { height: 24, pad: 'py-0.5', icon: 'text-sm', badge: 'py-0' },
-    normal: { height: 40, pad: 'py-2.5', icon: 'text-lg', badge: 'py-1' },
-    comfortable: { height: 52, pad: 'py-4', icon: 'text-lg', badge: 'py-1' },
-  };
+const ROW_DENSITY: Record<
+  RowDensity,
+  { height: number; pad: string; icon: string; badge: string }
+> = {
+  compact: { height: 24, pad: 'py-0.5', icon: 'text-sm', badge: 'py-0' },
+  normal: { height: 40, pad: 'py-2.5', icon: 'text-lg', badge: 'py-1' },
+  comfortable: { height: 52, pad: 'py-4', icon: 'text-lg', badge: 'py-1' },
+};
 
 type FlatItem =
   | { type: 'header'; group: { name: string; count: number } }
@@ -46,6 +50,12 @@ interface FileRowProps {
   rowPadClass: string;
   iconSizeClass: string;
   badgePadClass: string;
+  filterQuery?: string;
+  renamingPath?: string | null;
+  existingNames?: string[];
+  onRenameConfirm?: (oldPath: string, newName: string) => void;
+  onRenameCancel?: () => void;
+  onRenameTab?: (oldPath: string, newName: string) => void;
 }
 
 const FileRow = React.memo(
@@ -66,8 +76,15 @@ const FileRow = React.memo(
     rowPadClass,
     iconSizeClass,
     badgePadClass,
+    filterQuery,
+    renamingPath,
+    existingNames,
+    onRenameConfirm,
+    onRenameCancel,
+    onRenameTab,
   }: FileRowProps) => {
     const { t } = useTranslation();
+    const isRenaming = renamingPath === file.path;
     // Native drag via tauri-plugin-drag (mousedown/mousemove/mouseup)
     const dragHandlers = useDraggable({ file, selectedFiles, allFiles });
     const handleClick = useCallback(
@@ -120,17 +137,32 @@ const FileRow = React.memo(
             ? 'bg-xp-purple/20 border-xp-purple/40 border'
             : 'text-xp-text border border-transparent'
         } `}
-        {...dragHandlers}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
+        {...(isRenaming ? {} : dragHandlers)}
+        onClick={isRenaming ? undefined : handleClick}
+        onDoubleClick={isRenaming ? undefined : handleDoubleClick}
         onContextMenu={handleContextMenu}
-        onKeyDown={handleKeyDown}
+        onKeyDown={isRenaming ? undefined : handleKeyDown}
       >
         <div className="col-span-1 flex justify-center">
           <span className={iconSizeClass}>{getFileIcon(file)}</span>
         </div>
         <div className="col-span-5 min-w-0">
-          <div className="file-entry-name truncate font-medium">{file.name}</div>
+          {isRenaming && onRenameConfirm && onRenameCancel && onRenameTab && existingNames ? (
+            <InlineRenameInput
+              fileName={file.name}
+              isDir={file.is_dir}
+              isListView
+              existingNames={existingNames}
+              onConfirm={onRenameConfirm}
+              onCancel={onRenameCancel}
+              onTab={onRenameTab}
+              filePath={file.path}
+            />
+          ) : (
+            <div className="file-entry-name truncate font-medium">
+              {highlightName(file.name, filterQuery)}
+            </div>
+          )}
         </div>
         <div className="text-xp-text-muted col-span-2 text-right text-xs">
           {(() => {
@@ -150,7 +182,9 @@ const FileRow = React.memo(
           })()}
         </div>
         <div className="text-xp-text-muted col-span-2 text-center text-xs">
-          <span className={`bg-xp-surface inline-block rounded px-2 ${badgePadClass} font-mono text-xs capitalize`}>
+          <span
+            className={`bg-xp-surface inline-block rounded px-2 ${badgePadClass} font-mono text-xs capitalize`}
+          >
             {file.is_dir ? t('common.folder') : file.file_type}
           </span>
         </div>
@@ -191,6 +225,12 @@ const DetailsView = (props: DetailsViewProps) => {
     isCalculatingSize,
     calculateFolderSize,
     fileGroups,
+    filterQuery,
+    renamingPath,
+    existingNames,
+    onRenameConfirm,
+    onRenameCancel,
+    onRenameTab,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -307,6 +347,12 @@ const DetailsView = (props: DetailsViewProps) => {
     rowPadClass: rowCfg.pad,
     iconSizeClass: rowCfg.icon,
     badgePadClass: rowCfg.badge,
+    filterQuery,
+    renamingPath,
+    existingNames,
+    onRenameConfirm,
+    onRenameCancel,
+    onRenameTab,
   };
 
   const renderFlatItem = (item: FlatItem) => {
