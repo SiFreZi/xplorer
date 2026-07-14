@@ -44,6 +44,7 @@ import {
   RefreshCw,
   Plus,
   FolderClosed,
+  FolderPlus,
   FileText,
   CheckSquare,
   RotateCcw,
@@ -293,6 +294,17 @@ export class ContextMenuFactory {
         }
       } catch (err) {
         console.error('Failed to add custom commands to context menu:', err);
+      }
+
+      // New Folder inside this folder (folders only). Creates the new folder
+      // within the right-clicked folder rather than as a sibling.
+      if (file.is_dir) {
+        items.push({
+          id: 'new-folder-inside',
+          label: i18n.t('contextMenu.newFolder'),
+          icon: mi(FolderPlus),
+          action: () => this.actions.createFolder(file.path),
+        });
       }
 
       items.push({ id: 'sep1', label: '', separator: true });
