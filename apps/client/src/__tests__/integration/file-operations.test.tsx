@@ -334,60 +334,46 @@ describe('File Operations Integration', () => {
   });
 
   describe('Rename Operation', () => {
-    it('renames a file using the input toast dialog', async () => {
-      mockShowInputToast.mockResolvedValueOnce('renamed-file.txt');
-
+    it('triggers Windows-style inline rename via a start-inline-rename event (no popup)', () => {
       const deps = createDeps();
       const { result } = renderHook(() => useFileOperations(deps));
       const files = createTestFiles();
 
-      await act(async () => {
-        await result.current.contextMenuActions.rename(files[0]);
+      const listener = vi.fn();
+      window.addEventListener('start-inline-rename', listener);
+
+      act(() => {
+        result.current.contextMenuActions.rename(files[0]);
       });
 
-      expect(mockShowInputToast).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: 'Rename',
-          placeholder: 'document.txt',
-        }),
-      );
+      window.removeEventListener('start-inline-rename', listener);
 
+      expect(listener).toHaveBeenCalledTimes(1);
+      const event = listener.mock.calls[0][0] as CustomEvent<{ path: string }>;
+      expect(event.detail.path).toBe('C:\\Users\\Test\\document.txt');
+      // No modal popup and no direct rename from the context-menu action.
+      expect(mockShowInputToast).not.toHaveBeenCalled();
+      expect(mockRename).not.toHaveBeenCalled();
+    });
+
+    it('renames a file inline via renameFileInline', async () => {
+      const deps = createDeps();
+      const { result } = renderHook(() => useFileOperations(deps));
+      const files = createTestFiles();
+
+      let success: boolean | undefined;
+      await act(async () => {
+        success = await result.current.renameFileInline(files[0].path, 'renamed-file.txt');
+      });
+
+      expect(success).toBe(true);
       expect(mockRename).toHaveBeenCalledWith(
         'C:\\Users\\Test\\document.txt',
-        expect.stringContaining('renamed-file.txt'),
+        'C:\\Users\\Test\\renamed-file.txt',
       );
     });
 
-    it('cancels rename when user dismisses the dialog', async () => {
-      mockShowInputToast.mockResolvedValueOnce(null);
-
-      const deps = createDeps();
-      const { result } = renderHook(() => useFileOperations(deps));
-      const files = createTestFiles();
-
-      await act(async () => {
-        await result.current.contextMenuActions.rename(files[0]);
-      });
-
-      expect(mockRename).not.toHaveBeenCalled();
-    });
-
-    it('does not rename if new name is same as old name', async () => {
-      mockShowInputToast.mockResolvedValueOnce('document.txt');
-
-      const deps = createDeps();
-      const { result } = renderHook(() => useFileOperations(deps));
-      const files = createTestFiles();
-
-      await act(async () => {
-        await result.current.contextMenuActions.rename(files[0]);
-      });
-
-      expect(mockRename).not.toHaveBeenCalled();
-    });
-
-    it('handles rename errors gracefully', async () => {
-      mockShowInputToast.mockResolvedValueOnce('new-name.txt');
+    it('handles inline rename errors gracefully', async () => {
       mockRename.mockRejectedValueOnce(new Error('File in use'));
 
       const toastFn = vi.fn();
@@ -395,13 +381,14 @@ describe('File Operations Integration', () => {
       const { result } = renderHook(() => useFileOperations(deps));
       const files = createTestFiles();
 
+      let success: boolean | undefined;
       await act(async () => {
-        await result.current.contextMenuActions.rename(files[0]);
+        success = await result.current.renameFileInline(files[0].path, 'new-name.txt');
       });
 
+      expect(success).toBe(false);
       expect(toastFn).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: 'Rename failed',
           variant: 'destructive',
         }),
       );

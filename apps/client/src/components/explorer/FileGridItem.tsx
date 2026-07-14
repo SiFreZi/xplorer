@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDraggable } from '@/hooks/use-draggable';
 import { useDroppable } from '@/hooks/use-droppable';
-import { TagDots, GitStatusDot, LockBadge, isImageFile } from './FileGridHelpers';
+import { TagDots, GitStatusDot, LockBadge, isImageFile, highlightName } from './FileGridHelpers';
 import { FileGridItemProps, SizeBadgeInfo } from './FileGridTypes';
 import { formatFileSize } from '@/lib/utils';
 import { getFolderColorHex } from '@/lib/folder-colors';
@@ -147,7 +147,7 @@ const selectFileNameWithoutExtension = (input: HTMLInputElement, name: string, i
 
 // ─── Inline rename input component ──────────────────────────────────────────
 
-const InlineRenameInput = React.memo(
+export const InlineRenameInput = React.memo(
   ({
     fileName,
     isDir,
@@ -329,6 +329,7 @@ const FileGridItem = React.memo(
     showSizeBadge,
     sizeBadgeInfo,
     thumbnailUrl,
+    filterQuery,
     isRenaming,
     existingNames,
     onRenameConfirm,
@@ -393,7 +394,9 @@ const FileGridItem = React.memo(
       return (
         <>
           <span className="min-w-0 truncate">
-            {file.name.endsWith('.chat') ? getChatDisplayName(file.name) : file.name}
+            {file.name.endsWith('.chat')
+              ? highlightName(getChatDisplayName(file.name), filterQuery)
+              : highlightName(file.name, filterQuery)}
           </span>
           <LockBadge isReadonly={file.is_readonly} />
           <GitStatusDot status={gitStatus} />

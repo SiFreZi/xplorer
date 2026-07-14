@@ -19,6 +19,18 @@ export interface ViewComponentProps {
   getFolderSize: (path: string) => FolderSizeInfo | null;
   isCalculatingSize: (path: string) => boolean;
   calculateFolderSize?: (path: string) => void;
+  /** Active type-to-filter query, used to highlight matching letters in names. */
+  filterQuery?: string;
+  /** Path currently being inline-renamed (Windows-Explorer style), or null. */
+  renamingPath?: string | null;
+  /** Existing sibling names, used for rename conflict validation. */
+  existingNames?: string[];
+  /** Confirm an inline rename (Enter / blur). */
+  onRenameConfirm?: (oldPath: string, newName: string) => void;
+  /** Cancel an inline rename (Escape). */
+  onRenameCancel?: () => void;
+  /** Confirm rename and advance to the next file (Tab). */
+  onRenameTab?: (oldPath: string, newName: string) => void;
 }
 
 export interface SizeBadgeInfo {
@@ -53,6 +65,8 @@ export interface FileGridItemProps {
   sizeBadgeInfo?: SizeBadgeInfo | null;
   /** Pre-resolved thumbnail URL for image files (from useThumbnailCache) */
   thumbnailUrl?: string;
+  /** Active type-to-filter query, used to highlight matching letters in the name. */
+  filterQuery?: string;
   /** When true, the file name label is replaced with an inline rename input */
   isRenaming?: boolean;
   /** List of existing file/folder names in the directory (for conflict detection) */
