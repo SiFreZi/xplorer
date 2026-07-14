@@ -18,6 +18,7 @@ import {
   computeRelativeSyncPath,
 } from '@/hooks/use-pane-sync';
 import { useFolderViewSettings } from '@/hooks/use-folder-view-settings';
+import { useNameFilter } from '@/hooks/use-name-filter';
 
 // Re-export components needed by the pane content
 import HomePage from '@/pages/HomePage';
@@ -326,10 +327,24 @@ const EditorGroupPane = ({
     [sortedFilesRaw, activeCollectionFilter],
   );
 
+  // Type-to-filter: live-filter the list by substring match on the name as the user types.
+  const isFileListingTab =
+    activeTab?.type !== 'editor' &&
+    currentPath !== 'xplorer://home' &&
+    currentPath !== 'xplorer://trash' &&
+    currentPath !== 'xplorer://gdrive-manager' &&
+    !currentPath.startsWith('comparison://');
+  const nameFilter = useNameFilter({
+    enabled: isActive && isFileListingTab,
+    currentPath,
+    sourceFiles: sortedFiles,
+  });
+  const displayedFiles = nameFilter.filteredFiles;
+
   // Grouped files (only computed when grouping is active)
   const fileGroups: FileGroup[] | null = useMemo(
-    () => (groupByDate ? groupFilesByDate(sortedFiles) : null),
-    [groupByDate, sortedFiles],
+    () => (groupByDate ? groupFilesByDate(displayedFiles) : null),
+    [groupByDate, displayedFiles],
   );
 
   // Clear selection when this pane navigates to a new path
@@ -339,10 +354,11 @@ const EditorGroupPane = ({
     setSelectedFile(null);
   }, [currentPath, isActive, setSelectedFiles, setSelectedFile]);
 
-  // Track last-clicked index for shift-click range selection
+  // Track last-clicked index for shift-click range selection.
+  // Uses the displayed (filtered) list so range selection matches what the user sees.
   const lastClickedIndexRef = useRef<number>(-1);
-  const sortedFilesRef = useRef(sortedFiles);
-  sortedFilesRef.current = sortedFiles;
+  const sortedFilesRef = useRef(displayedFiles);
+  sortedFilesRef.current = displayedFiles;
 
   // File click handler (per-pane) — uses parent's setSelectedFile directly
   const handleFileClick = useCallback(
@@ -595,9 +611,16 @@ const EditorGroupPane = ({
         toggleSortOrder={toggleSortOrder}
         groupByDate={groupByDate}
         setGroupByDate={setGroupByDate}
-        sortedFiles={sortedFiles}
+        sortedFiles={displayedFiles}
         fileGroups={fileGroups}
         isLoading={isLoading}
+        filterQuery={nameFilter.filterQuery}
+        filterMatchCount={nameFilter.matchCount}
+        filterRecursive={nameFilter.recursive}
+        filterRecursiveSupported={nameFilter.recursiveSupported}
+        filterIsSearching={nameFilter.isSearching}
+        onToggleFilterRecursive={nameFilter.toggleRecursive}
+        onClearFilter={nameFilter.clearFilter}
         selectedFiles={selectedFiles}
         setSelectedFiles={setSelectedFiles}
         currentPath={currentPath}
