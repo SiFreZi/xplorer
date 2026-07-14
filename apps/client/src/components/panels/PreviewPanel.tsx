@@ -5,6 +5,7 @@ import { defaultPreviewFactory, PreviewProps, PreviewType } from '@/lib/preview-
 import { extensionHost } from '@/lib/extension-host';
 import { PreviewSkeleton } from '@/components/ui/Skeleton';
 import PreviewActionBar from './PreviewActionBar';
+import { useWindowEvent } from '@/hooks/use-window-event';
 
 // Module-level cache for preview components by file type, avoiding redundant dynamic imports
 const previewComponentCache = new Map<PreviewType, React.ComponentType<PreviewProps>>();
@@ -34,6 +35,10 @@ const EnhancedFilePreview: React.FC<{
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Reload the preview when the user changes a preview association.
+  const [previewAssocVersion, setPreviewAssocVersion] = useState(0);
+  useWindowEvent('preview-associations-changed', () => setPreviewAssocVersion((v) => v + 1));
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +160,7 @@ const EnhancedFilePreview: React.FC<{
     };
     // file.path and file.name are sufficient to determine preview type
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file.path, file.name, currentPath]);
+  }, [file.path, file.name, currentPath, previewAssocVersion]);
 
   const handlePreviewError = (error: Error) => {
     console.error('Preview error:', error);

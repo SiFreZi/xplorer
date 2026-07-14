@@ -1,4 +1,5 @@
 import { FileEntry } from '@/lib/tauri-api';
+import { getPreviewOverride } from '@/lib/preview-associations';
 
 // Preview types
 export type PreviewType =
@@ -124,7 +125,7 @@ export class PreviewFactory {
     // Text previews
     this.capabilities.set('text', {
       type: 'text',
-      extensions: ['txt', 'log', 'ini', 'cfg', 'conf'],
+      extensions: ['txt', 'log', 'ini', 'cfg', 'conf', 'npmrc'],
       mimeTypes: ['text/plain'],
       maxSize: 5 * 1024 * 1024, // 5MB
       priority: 8,
@@ -233,6 +234,17 @@ export class PreviewFactory {
   public getFileType(file: FileEntry): PreviewType {
     if (file.is_dir) return 'folder';
 
+    // User-defined override wins (Preview Associations).
+    const overrideExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const override = getPreviewOverride(overrideExt);
+    if (
+      override &&
+      this.config.enabledTypes.includes(override) &&
+      this.capabilities.has(override)
+    ) {
+      return override;
+    }
+
     // Find the best matching capability
     let bestMatch: PreviewCapability | null = null;
     let highestPriority = -1;
@@ -269,7 +281,12 @@ export class PreviewFactory {
     const capability = this.capabilities.get(fileType);
 
     if (!capability) return null;
-    if (!capability.canPreview(file)) return null;
+
+    // A user override forces this previewer even if the built-in extension/mime
+    // check would reject the file (e.g. a dotfile assigned to the text preview).
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const isOverridden = getPreviewOverride(ext) === fileType;
+    if (!isOverridden && !capability.canPreview(file)) return null;
 
     try {
       return await capability.getPreviewComponent();

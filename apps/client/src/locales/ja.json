@@ -64,6 +64,7 @@
     "desktop": "デスクトップ",
     "pictures": "ピクチャ",
     "icloudDrive": "iCloud Drive",
+    "oneDrive": "OneDrive",
     "recent": "最近",
     "favorites": "お気に入り",
     "noBookmarks": "ブックマークはありません",
@@ -249,6 +250,17 @@
       "reset": "リセット",
       "resetExt": ".{{ext}} ファイルのデフォルトをリセット",
       "resetAll": "すべてのファイルの関連付けをリセット"
+    },
+    "previewAssociations": {
+      "title": "プレビューの関連付け",
+      "description": "ファイル拡張子をどの組み込みプレビューアで表示するかを指定します（例: .npmrc をテキストとして表示）。",
+      "extPlaceholder": ".npmrc",
+      "typeLabel": "プレビュータイプ",
+      "add": "追加",
+      "noPreferences": "プレビューの関連付けはまだありません。上で追加してください。",
+      "reset": "削除",
+      "resetExt": ".{{ext}} ファイルのプレビュー関連付けを削除",
+      "resetAll": "すべてのプレビュー関連付けをリセット"
     },
     "general": {
       "appearance": "外観",
@@ -625,6 +637,32 @@
       "deleteRule": "Delete rule",
       "addRule": "Add Rule",
       "resetDefaults": "Reset to Defaults"
+    },
+    "customCommands": {
+      "title": "カスタムコマンド",
+      "description": "ファイルやフォルダーを外部プログラム（VS Code や Fork など）で開く右クリックコマンドを追加します。",
+      "labelPlaceholder": "メニューラベル（例：VS Code で開く）",
+      "commandPlaceholder": "コマンド（例：code \"{path}\"）",
+      "appliesTo": "対象",
+      "add": "追加",
+      "icon": "アイコン",
+      "hint": "{path}、{dir}、{name} を使用できます。スペースを含むパスは引用符で囲んでください（例：code \"{path}\"）。Windows で GUI アプリを起動するには：start \"\" your-app \"{path}\" を使用してください。",
+      "noCommands": "カスタムコマンドはまだありません。上で追加してください。",
+      "toggle": "{{label}} を切り替え",
+      "remove": "削除",
+      "removeCmd": "コマンド {{label}} を削除",
+      "edit": "編集",
+      "editCmd": "コマンド {{label}} を編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "uploadIcon": "カスタム画像を使用",
+      "iconTooLarge": "画像が大きすぎます（最大 128 KB）。",
+      "iconReadError": "画像を読み込めませんでした。",
+      "target": {
+        "both": "ファイルとフォルダー",
+        "file": "ファイルのみ",
+        "folder": "フォルダーのみ"
+      }
     },
     "versioning": {
       "loadingSettings": "Loading versioning settings...",
@@ -1383,6 +1421,14 @@
     "emptyFolder": "このフォルダは空です",
     "emptyFolderHint": "右クリックでファイルやフォルダを作成"
   },
+  "fileFilter": {
+    "label": "フィルター",
+    "clear": "フィルターをクリア",
+    "matches_one": "{{count}} 件一致",
+    "matches_other": "{{count}} 件一致",
+    "recursive": "再帰的",
+    "recursiveHint": "サブフォルダーも検索"
+  },
   "bottomPanel": {
     "terminal": "ターミナル",
     "activityLog": "アクティビティログ",
@@ -1439,6 +1485,7 @@
     "renamedInlineDesc": "\"{{oldName}}\" → \"{{newName}}\"",
     "renameFailed": "名前の変更に失敗しました",
     "renameFailedDesc": "名前の変更に失敗しました：{{error}}",
+    "customCommandFailed": "\"{{label}}\" が失敗しました",
     "folderCreated": "フォルダを作成しました",
     "folderCreatedDesc": "フォルダ \"{{name}}\" を作成しました",
     "createFolderFailed": "フォルダの作成に失敗しました",
