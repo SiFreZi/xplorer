@@ -64,6 +64,7 @@
     "desktop": "桌面",
     "pictures": "图片",
     "icloudDrive": "iCloud 云盘",
+    "oneDrive": "OneDrive",
     "recent": "最近",
     "favorites": "收藏夹",
     "noBookmarks": "暂无书签",
@@ -249,6 +250,17 @@
       "reset": "重置",
       "resetExt": "重置 .{{ext}} 文件的默认打开方式",
       "resetAll": "重置所有文件关联"
+    },
+    "previewAssociations": {
+      "title": "预览关联",
+      "description": "强制指定某个文件扩展名使用哪个内置预览器（例如将 .npmrc 作为文本预览）。",
+      "extPlaceholder": ".npmrc",
+      "typeLabel": "预览类型",
+      "add": "添加",
+      "noPreferences": "尚未设置预览关联。请在上方添加。",
+      "reset": "移除",
+      "resetExt": "移除 .{{ext}} 文件的预览关联",
+      "resetAll": "重置所有预览关联"
     },
     "general": {
       "appearance": "外观",
@@ -625,6 +637,32 @@
       "deleteRule": "Delete rule",
       "addRule": "Add Rule",
       "resetDefaults": "Reset to Defaults"
+    },
+    "customCommands": {
+      "title": "自定义命令",
+      "description": "添加你自己的右键命令，用外部程序打开文件或文件夹（例如 VS Code 或 Fork）。",
+      "labelPlaceholder": "菜单标签（例如：用 VS Code 打开）",
+      "commandPlaceholder": "命令（例如：code \"{path}\"）",
+      "appliesTo": "适用于",
+      "add": "添加",
+      "icon": "图标",
+      "hint": "使用 {path}、{dir} 或 {name}；对于包含空格的路径请加引号（例如：code \"{path}\"）。在 Windows 上启动 GUI 程序请使用：start \"\" your-app \"{path}\"。",
+      "noCommands": "还没有自定义命令。请在上方添加。",
+      "toggle": "切换 {{label}}",
+      "remove": "移除",
+      "removeCmd": "移除命令 {{label}}",
+      "edit": "编辑",
+      "editCmd": "编辑命令 {{label}}",
+      "save": "保存",
+      "cancel": "取消",
+      "uploadIcon": "使用自定义图片",
+      "iconTooLarge": "图片太大（最大 128 KB）。",
+      "iconReadError": "无法读取图片。",
+      "target": {
+        "both": "文件和文件夹",
+        "file": "仅文件",
+        "folder": "仅文件夹"
+      }
     },
     "versioning": {
       "loadingSettings": "Loading versioning settings...",
@@ -1383,6 +1421,14 @@
     "emptyFolder": "此文件夹为空",
     "emptyFolderHint": "右键单击以创建文件或文件夹"
   },
+  "fileFilter": {
+    "label": "筛选",
+    "clear": "清除筛选",
+    "matches_one": "{{count}} 个匹配",
+    "matches_other": "{{count}} 个匹配",
+    "recursive": "递归",
+    "recursiveHint": "同时搜索子文件夹"
+  },
   "bottomPanel": {
     "terminal": "终端",
     "activityLog": "活动日志",
@@ -1439,6 +1485,7 @@
     "renamedInlineDesc": "\"{{oldName}}\" → \"{{newName}}\"",
     "renameFailed": "重命名失败",
     "renameFailedDesc": "重命名失败：{{error}}",
+    "customCommandFailed": "\"{{label}}\" 失败",
     "folderCreated": "文件夹已创建",
     "folderCreatedDesc": "已创建文件夹 \"{{name}}\"",
     "createFolderFailed": "创建文件夹失败",

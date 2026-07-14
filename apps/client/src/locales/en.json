@@ -64,6 +64,7 @@
     "desktop": "Desktop",
     "pictures": "Pictures",
     "icloudDrive": "iCloud Drive",
+    "oneDrive": "OneDrive",
     "recent": "RECENT",
     "favorites": "FAVORITES",
     "noBookmarks": "No bookmarks yet",
@@ -249,6 +250,17 @@
       "reset": "Reset",
       "resetExt": "Reset default for .{{ext}} files",
       "resetAll": "Reset all file associations"
+    },
+    "previewAssociations": {
+      "title": "Preview Associations",
+      "description": "Force which built-in previewer renders a file extension (e.g. .npmrc as Text).",
+      "extPlaceholder": ".npmrc",
+      "typeLabel": "Preview type",
+      "add": "Add",
+      "noPreferences": "No preview associations set yet. Add one above.",
+      "reset": "Remove",
+      "resetExt": "Remove preview association for .{{ext}} files",
+      "resetAll": "Reset all preview associations"
     },
     "general": {
       "appearance": "Appearance",
@@ -625,6 +637,32 @@
       "deleteRule": "Delete rule",
       "addRule": "Add Rule",
       "resetDefaults": "Reset to Defaults"
+    },
+    "customCommands": {
+      "title": "Custom Commands",
+      "description": "Add your own right-click commands that open files or folders in external programs (e.g. VS Code or Fork).",
+      "labelPlaceholder": "Menu label (e.g. Open in VS Code)",
+      "commandPlaceholder": "Command (e.g. code \"{path}\")",
+      "appliesTo": "Applies to",
+      "add": "Add",
+      "icon": "Icon",
+      "hint": "Use {path}, {dir} or {name} — wrap them in quotes for paths with spaces (e.g. code \"{path}\"). For GUI apps on Windows, use: start \"\" your-app \"{path}\".",
+      "noCommands": "No custom commands yet. Add one above.",
+      "toggle": "Toggle {{label}}",
+      "remove": "Remove",
+      "removeCmd": "Remove command {{label}}",
+      "edit": "Edit",
+      "editCmd": "Edit command {{label}}",
+      "save": "Save",
+      "cancel": "Cancel",
+      "uploadIcon": "Use a custom image",
+      "iconTooLarge": "Image too large (max 128 KB).",
+      "iconReadError": "Could not read the image.",
+      "target": {
+        "both": "Files & folders",
+        "file": "Files only",
+        "folder": "Folders only"
+      }
     },
     "versioning": {
       "loadingSettings": "Loading versioning settings...",
@@ -1383,6 +1421,14 @@
     "emptyFolder": "This folder is empty",
     "emptyFolderHint": "Right-click to create files or folders"
   },
+  "fileFilter": {
+    "label": "Filter",
+    "clear": "Clear filter",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches",
+    "recursive": "Recursive",
+    "recursiveHint": "Also search subfolders"
+  },
   "bottomPanel": {
     "terminal": "Terminal",
     "activityLog": "Activity Log",
@@ -1439,6 +1485,7 @@
     "renamedInlineDesc": "\"{{oldName}}\" → \"{{newName}}\"",
     "renameFailed": "Rename Failed",
     "renameFailedDesc": "Failed to rename: {{error}}",
+    "customCommandFailed": "\"{{label}}\" failed",
     "folderCreated": "Folder Created",
     "folderCreatedDesc": "Created folder \"{{name}}\"",
     "createFolderFailed": "Create Folder Failed",

@@ -64,6 +64,7 @@
     "desktop": "Desktop",
     "pictures": "Gambar",
     "icloudDrive": "iCloud Drive",
+    "oneDrive": "OneDrive",
     "recent": "TERBARU",
     "favorites": "FAVORIT",
     "noBookmarks": "Belum ada bookmark",
@@ -249,6 +250,17 @@
       "reset": "Reset",
       "resetExt": "Reset default untuk file .{{ext}}",
       "resetAll": "Reset semua asosiasi file"
+    },
+    "previewAssociations": {
+      "title": "Asosiasi Pratinjau",
+      "description": "Paksa previewer bawaan mana yang menampilkan ekstensi file (mis. .npmrc sebagai Teks).",
+      "extPlaceholder": ".npmrc",
+      "typeLabel": "Jenis pratinjau",
+      "add": "Tambah",
+      "noPreferences": "Belum ada asosiasi pratinjau. Tambahkan di atas.",
+      "reset": "Hapus",
+      "resetExt": "Hapus asosiasi pratinjau untuk file .{{ext}}",
+      "resetAll": "Reset semua asosiasi pratinjau"
     },
     "general": {
       "appearance": "Tampilan",
@@ -625,6 +637,32 @@
       "deleteRule": "Delete rule",
       "addRule": "Add Rule",
       "resetDefaults": "Reset to Defaults"
+    },
+    "customCommands": {
+      "title": "Perintah Kustom",
+      "description": "Tambahkan perintah klik-kanan Anda sendiri yang membuka file atau folder di program eksternal (mis. VS Code atau Fork).",
+      "labelPlaceholder": "Label menu (mis. Buka di VS Code)",
+      "commandPlaceholder": "Perintah (mis. code \"{path}\")",
+      "appliesTo": "Berlaku untuk",
+      "add": "Tambah",
+      "icon": "Ikon",
+      "hint": "Gunakan {path}, {dir}, atau {name}; bungkus dengan tanda kutip untuk path berspasi (mis. code \"{path}\"). Untuk aplikasi GUI di Windows, gunakan: start \"\" your-app \"{path}\".",
+      "noCommands": "Belum ada perintah kustom. Tambahkan di atas.",
+      "toggle": "Alihkan {{label}}",
+      "remove": "Hapus",
+      "removeCmd": "Hapus perintah {{label}}",
+      "edit": "Edit",
+      "editCmd": "Edit perintah {{label}}",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "uploadIcon": "Gunakan gambar kustom",
+      "iconTooLarge": "Gambar terlalu besar (maks 128 KB).",
+      "iconReadError": "Tidak dapat membaca gambar.",
+      "target": {
+        "both": "File & folder",
+        "file": "Hanya file",
+        "folder": "Hanya folder"
+      }
     },
     "versioning": {
       "loadingSettings": "Loading versioning settings...",
@@ -1383,6 +1421,14 @@
     "emptyFolder": "Folder ini kosong",
     "emptyFolderHint": "Klik kanan untuk membuat file atau folder"
   },
+  "fileFilter": {
+    "label": "Filter",
+    "clear": "Hapus filter",
+    "matches_one": "{{count}} cocok",
+    "matches_other": "{{count}} cocok",
+    "recursive": "Rekursif",
+    "recursiveHint": "Cari juga di subfolder"
+  },
   "bottomPanel": {
     "terminal": "Terminal",
     "activityLog": "Log Aktivitas",
@@ -1439,6 +1485,7 @@
     "renamedInlineDesc": "\"{{oldName}}\" → \"{{newName}}\"",
     "renameFailed": "Pengubahan Nama Gagal",
     "renameFailedDesc": "Gagal mengubah nama: {{error}}",
+    "customCommandFailed": "\"{{label}}\" gagal",
     "folderCreated": "Folder Dibuat",
     "folderCreatedDesc": "Folder \"{{name}}\" dibuat",
     "createFolderFailed": "Pembuatan Folder Gagal",

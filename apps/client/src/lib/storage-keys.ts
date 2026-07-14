@@ -70,6 +70,15 @@ export const STORAGE_KEYS = {
   // File open preferences (Open With)
   FILE_OPEN_PREFS: 'xplorer:file-open-prefs',
 
+  // Preview type overrides per extension (Preview Associations)
+  PREVIEW_ASSOCIATIONS: 'xplorer:preview-associations',
+
+  // User-defined context-menu commands (open with external apps, etc.)
+  CUSTOM_COMMANDS: 'xplorer:custom-commands',
+
+  // Hidden icons in the right vertical panel bar
+  HIDDEN_PANEL_ICONS: 'xplorer:hidden-panel-icons',
+
   // AI Chat file access
   AI_FILE_ACCESS_GRANTED: 'xplorer:ai-file-access-granted',
 
