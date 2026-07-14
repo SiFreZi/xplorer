@@ -26,6 +26,8 @@ interface PaneTabBarProps {
   onCloseTabsToRight?: (tabId: string) => void;
   onCloseAllTabs?: () => void;
   onReorderTab?: (fromIndex: number, toIndex: number) => void;
+  /** Move a tab from another pane into this pane (cross-pane drag). */
+  onMoveTabToGroup?: (fromGroupId: string, tabId: string, toIndex?: number) => void;
   /** Whether this pane is currently maximized */
   isMaximized?: boolean;
   onMaximizePane?: () => void;
@@ -44,6 +46,10 @@ interface PaneTabBarProps {
 }
 
 // ── Context Menu ──────────────────────────────────────────────────────────────
+
+// Cross-pane tab drag source. Module-level so it is shared across all PaneTabBar
+// instances (HTML5 DnD can't read custom dataTransfer payloads during dragover).
+let tabDragSource: { groupId: string; tabId: string } | null = null;
 
 interface ContextMenuState {
   tabId: string;
@@ -230,7 +236,7 @@ const TabContextMenu = ({
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const PaneTabBar = ({
-  groupId: _groupId,
+  groupId,
   tabs,
   activeTabId,
   isActiveGroup,
@@ -248,6 +254,7 @@ const PaneTabBar = ({
   onCloseTabsToRight,
   onCloseAllTabs,
   onReorderTab,
+  onMoveTabToGroup,
   isMaximized,
   onMaximizePane,
   onRestorePane,
@@ -283,6 +290,8 @@ const PaneTabBar = ({
   // Drag-to-reorder state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  // True while a tab dragged from ANOTHER pane is hovering this tab bar.
+  const [crossPaneActive, setCrossPaneActive] = useState(false);
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Cross-tab file drop state: which tab is being hovered with external files
@@ -350,29 +359,47 @@ const PaneTabBar = ({
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
-  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
-    setDragIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', String(index));
-    // Make the drag ghost semi-transparent
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = '0.5';
-    }
-  }, []);
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, index: number) => {
+      setDragIndex(index);
+      const tab = sortedTabs[index];
+      if (tab) {
+        tabDragSource = { groupId, tabId: tab.id };
+        e.dataTransfer.setData('application/x-xplorer-tab', tab.id);
+      }
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(index));
+      // Make the drag ghost semi-transparent
+      if (e.currentTarget instanceof HTMLElement) {
+        e.currentTarget.style.opacity = '0.5';
+      }
+    },
+    [groupId, sortedTabs],
+  );
 
   const handleDragEnd = useCallback((e: React.DragEvent) => {
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '1';
     }
+    tabDragSource = null;
     setDragIndex(null);
     setDropIndex(null);
+    setCrossPaneActive(false);
   }, []);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent, index: number) => {
+      // Cross-pane tab drag (source is a different pane): allow drop before `index`.
+      if (tabDragSource && tabDragSource.groupId !== groupId) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDropIndex(index);
+        setCrossPaneActive(true);
+        return;
+      }
+      if (dragIndex === null) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      if (dragIndex === null) return;
 
       // Enforce pinned/unpinned boundary:
       // A pinned tab can only be dropped among pinned tabs (0..pinnedCount-1)
@@ -383,12 +410,25 @@ const PaneTabBar = ({
 
       setDropIndex(index);
     },
-    [dragIndex, pinnedCount, sortedTabs],
+    [dragIndex, pinnedCount, sortedTabs, groupId],
   );
 
   const handleDrop = useCallback(
     (e: React.DragEvent, toIndex: number) => {
       e.preventDefault();
+
+      // Cross-pane move: insert the dragged tab before the hovered tab.
+      if (tabDragSource && tabDragSource.groupId !== groupId) {
+        const src = tabDragSource;
+        tabDragSource = null;
+        setDropIndex(null);
+        setCrossPaneActive(false);
+        const toTab = sortedTabs[toIndex];
+        const origTo = toTab ? tabs.findIndex((t) => t.id === toTab.id) : undefined;
+        onMoveTabToGroup?.(src.groupId, src.tabId, origTo);
+        return;
+      }
+
       if (dragIndex === null || dragIndex === toIndex) {
         setDragIndex(null);
         setDropIndex(null);
@@ -413,7 +453,34 @@ const PaneTabBar = ({
       setDragIndex(null);
       setDropIndex(null);
     },
-    [dragIndex, pinnedCount, sortedTabs, tabs, onReorderTab],
+    [dragIndex, pinnedCount, sortedTabs, tabs, onReorderTab, groupId, onMoveTabToGroup],
+  );
+
+  // Cross-pane drop on empty tab-bar area: append the dragged tab to this pane.
+  const handleBarDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (tabDragSource && tabDragSource.groupId !== groupId) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setCrossPaneActive(true);
+      }
+    },
+    [groupId],
+  );
+
+  const handleBarDrop = useCallback(
+    (e: React.DragEvent) => {
+      // A tab-item drop clears tabDragSource first (event bubbles from item to
+      // bar), so this only fires for drops on empty tab-bar space → append.
+      if (tabDragSource && tabDragSource.groupId !== groupId) {
+        e.preventDefault();
+        const src = tabDragSource;
+        tabDragSource = null;
+        setCrossPaneActive(false);
+        onMoveTabToGroup?.(src.groupId, src.tabId, undefined);
+      }
+    },
+    [groupId, onMoveTabToGroup],
   );
 
   // Pin icon style
@@ -460,7 +527,24 @@ const PaneTabBar = ({
       }}
     >
       {/* Tabs */}
-      <div style={{ flex: 1, display: 'flex', overflowX: 'auto', minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          overflowX: 'auto',
+          minWidth: 0,
+          outline: crossPaneActive ? '2px dashed var(--xp-blue)' : 'none',
+          outlineOffset: -2,
+        }}
+        onDragOver={handleBarDragOver}
+        onDrop={handleBarDrop}
+        onDragLeave={(e) => {
+          // Only clear when leaving the whole bar, not when moving between tabs.
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setCrossPaneActive(false);
+          }
+        }}
+      >
         {sortedTabs.map((tab, index) => {
           const TabIcon = getTabIcon(tab);
           const isActive = activeTabId === tab.id;

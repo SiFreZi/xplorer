@@ -10,7 +10,7 @@ import {
   ChevronRight,
   GripHorizontal,
 } from 'lucide-react';
-import { TauriAPI } from '@/lib/tauri-api';
+import { TauriAPI, type FileEntry } from '@/lib/tauri-api';
 import { PATH_SEPARATOR, isWindows, isMac } from '@/lib/constants';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +27,8 @@ interface UserDirectories {
 interface SidebarQuickAccessProps {
   currentPath: string;
   navigateToPath: (path: string) => void;
+  /** Open a quick-access location in a new tab (used by middle-click). */
+  openInNewTab?: (file: FileEntry) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   sectionHeight: number | undefined;
@@ -36,12 +38,33 @@ interface SidebarQuickAccessProps {
 const SidebarQuickAccess = ({
   currentPath,
   navigateToPath,
+  openInNewTab,
   collapsed,
   onToggleCollapsed,
   sectionHeight,
   onResizeStart,
 }: SidebarQuickAccessProps) => {
   const { t } = useTranslation();
+
+  // Middle-click a quick-access location to open it in a new tab.
+  const handleAuxOpen = (e: React.MouseEvent, path: string, label: string) => {
+    if (e.button === 1 && openInNewTab) {
+      e.preventDefault();
+      openInNewTab({
+        name: label,
+        path,
+        size: 0,
+        modified: 0,
+        is_dir: true,
+        file_type: 'folder',
+        is_readonly: false,
+      });
+    }
+  };
+  // Prevent middle-click autoscroll; opening happens on auxclick.
+  const preventMiddleAutoscroll = (e: React.MouseEvent) => {
+    if (e.button === 1) e.preventDefault();
+  };
   const [userDirectories, setUserDirectories] = useState<UserDirectories | null>(null);
   const [iCloudPath, setICloudPath] = useState<string | null>(null);
   const [oneDrivePath, setOneDrivePath] = useState<string | null>(null);
@@ -142,6 +165,8 @@ const SidebarQuickAccess = ({
                 <button
                   key={labelKey}
                   onClick={() => navigateToPath(path)}
+                  onMouseDown={preventMiddleAutoscroll}
+                  onAuxClick={(e) => handleAuxOpen(e, path, label)}
                   className={`flex w-full items-center rounded px-2 py-1.5 text-xs transition-colors ${
                     isActive
                       ? 'bg-xp-blue/15 text-xp-blue'
@@ -166,6 +191,8 @@ const SidebarQuickAccess = ({
                 <button
                   key="icloud"
                   onClick={() => navigateToPath(iCloudPath)}
+                  onMouseDown={preventMiddleAutoscroll}
+                  onAuxClick={(e) => handleAuxOpen(e, iCloudPath, label)}
                   className={`flex w-full items-center rounded px-2 py-1.5 text-xs transition-colors ${
                     isActive
                       ? 'bg-xp-blue/15 text-xp-blue'
@@ -190,6 +217,8 @@ const SidebarQuickAccess = ({
                 <button
                   key="onedrive"
                   onClick={() => navigateToPath(oneDrivePath)}
+                  onMouseDown={preventMiddleAutoscroll}
+                  onAuxClick={(e) => handleAuxOpen(e, oneDrivePath, label)}
                   className={`flex w-full items-center rounded px-2 py-1.5 text-xs transition-colors ${
                     isActive
                       ? 'bg-xp-blue/15 text-xp-blue'

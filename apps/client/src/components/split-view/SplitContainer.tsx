@@ -68,6 +68,7 @@ const SplitContainer = ({ node, groups, activeGroupId, path }: SplitContainerPro
         onCloseTabsToRight={splitActions.onCloseTabsToRight}
         onCloseAllTabs={splitActions.onCloseAllTabs}
         onReorderTab={splitActions.onReorderTab}
+        onMoveTab={splitActions.onMoveTab}
         activeCollectionFilter={activeCollectionFilter}
         paneSyncEnabled={paneSync.paneSyncEnabled}
         paneSyncMode={paneSync.paneSyncMode}
