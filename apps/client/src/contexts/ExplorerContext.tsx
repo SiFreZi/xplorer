@@ -47,6 +47,7 @@ export interface SplitActionsContextValue {
   onCloseTabsToRight?: (groupId: string, tabId: string) => void;
   onCloseAllTabs?: (groupId: string) => void;
   onReorderTab?: (groupId: string, fromIndex: number, toIndex: number) => void;
+  onMoveTab?: (fromGroupId: string, tabId: string, toGroupId: string, toIndex?: number) => void;
 }
 
 // ── Pane sync ────────────────────────────────────────────────────────────────

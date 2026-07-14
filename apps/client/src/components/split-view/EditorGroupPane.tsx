@@ -120,6 +120,7 @@ interface EditorGroupPaneProps {
   onCloseTabsToRight?: (groupId: string, tabId: string) => void;
   onCloseAllTabs?: (groupId: string) => void;
   onReorderTab?: (groupId: string, fromIndex: number, toIndex: number) => void;
+  onMoveTab?: (fromGroupId: string, tabId: string, toGroupId: string, toIndex?: number) => void;
   // Maximize/restore
   isMaximized?: boolean;
   onMaximizePane?: (groupId: string) => void;
@@ -163,6 +164,7 @@ const EditorGroupPane = ({
   onCloseTabsToRight,
   onCloseAllTabs,
   onReorderTab,
+  onMoveTab,
   isMaximized,
   onMaximizePane,
   onRestorePane,
@@ -716,6 +718,11 @@ const EditorGroupPane = ({
           }
           onCloseAllTabs={onCloseAllTabs ? () => onCloseAllTabs(group.id) : undefined}
           onReorderTab={onReorderTab ? (from, to) => onReorderTab(group.id, from, to) : undefined}
+          onMoveTabToGroup={
+            onMoveTab
+              ? (fromGroupId, tabId, toIndex) => onMoveTab(fromGroupId, tabId, group.id, toIndex)
+              : undefined
+          }
           isMaximized={isMaximized}
           onMaximizePane={onMaximizePane ? () => onMaximizePane(group.id) : undefined}
           onRestorePane={onRestorePane}
@@ -732,6 +739,7 @@ const EditorGroupPane = ({
         <NavigationBar
           currentPath={effectiveDir}
           navigateToPath={sharedActions.navigateToPath}
+          openInNewTab={openInNewTab}
           refetch={refetch}
         />
       )}

@@ -167,6 +167,7 @@ const LeftSidebar = forwardRef<LeftSidebarHandle, LeftSidebarProps>(function Lef
           <SidebarQuickAccess
             currentPath={currentPath}
             navigateToPath={navigateToPath}
+            openInNewTab={openInNewTab}
             collapsed={sectionCollapsed.quickAccess}
             onToggleCollapsed={() => toggleSection('quickAccess')}
             sectionHeight={sectionHeights.quickAccess}

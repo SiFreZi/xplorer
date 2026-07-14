@@ -413,6 +413,7 @@ const MainLayout = (props: MainLayoutProps) => {
         onCloseTabsToRight: splitLayout.closeTabsToRight,
         onCloseAllTabs: splitLayout.closeAllTabs,
         onReorderTab: splitLayout.reorderTab,
+        onMoveTab: splitLayout.moveTab,
       },
       paneSync: {
         paneSyncEnabled: paneSync.enabled,

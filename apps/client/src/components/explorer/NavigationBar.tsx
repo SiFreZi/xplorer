@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ChevronRight, Pencil, HardDrive, Home, Trash2, Cloud, Folder } from 'lucide-react';
 import { PATH_SEPARATOR, isWindows } from '@/lib/constants';
-import { TauriAPI } from '@/lib/tauri-api';
+import { TauriAPI, type FileEntry } from '@/lib/tauri-api';
 import { getCollection } from '@/lib/collections';
 import { renderIcon } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 interface NavigationBarProps {
   currentPath: string;
   navigateToPath?: (path: string) => void;
+  /** Open a breadcrumb folder in a new tab (used by middle-click). */
+  openInNewTab?: (file: FileEntry) => void;
   refetch?: () => void;
 }
 
@@ -124,7 +126,12 @@ const parseBreadcrumbSegments = (path: string): PathSegment[] => {
 
 type PathValidation = 'idle' | 'valid' | 'invalid' | 'checking';
 
-const NavigationBar = ({ currentPath, navigateToPath, refetch: _refetch }: NavigationBarProps) => {
+const NavigationBar = ({
+  currentPath,
+  navigateToPath,
+  openInNewTab,
+  refetch: _refetch,
+}: NavigationBarProps) => {
   const { t } = useTranslation();
   const [isEditingPath, setIsEditingPath] = useState(false);
   const [editPathValue, setEditPathValue] = useState(currentPath);
@@ -620,6 +627,26 @@ const NavigationBar = ({ currentPath, navigateToPath, refetch: _refetch }: Navig
                       onClick={(e) => {
                         e.stopPropagation();
                         navigateToPath?.(seg.fullPath);
+                      }}
+                      onMouseDown={(e) => {
+                        // Prevent middle-click autoscroll; opening happens on auxclick.
+                        if (e.button === 1) e.preventDefault();
+                      }}
+                      onAuxClick={(e) => {
+                        // Middle-click a breadcrumb folder => open it in a new tab.
+                        if (e.button === 1 && openInNewTab) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openInNewTab({
+                            name: seg.name,
+                            path: seg.fullPath,
+                            size: 0,
+                            modified: 0,
+                            is_dir: true,
+                            file_type: 'folder',
+                            is_readonly: false,
+                          });
+                        }
                       }}
                       className={`hover:bg-xp-surface-light max-w-[160px] flex-shrink-0 truncate rounded px-1.5 py-0.5 text-sm transition-colors ${
                         i === segments.length - 1
