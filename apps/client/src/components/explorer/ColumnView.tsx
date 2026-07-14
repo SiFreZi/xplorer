@@ -359,6 +359,7 @@ const ColumnView = ({
   onRenameConfirm,
   onRenameCancel,
   onRenameTab,
+  onActiveDirChange,
 }: ViewComponentProps) => {
   const [columns, setColumns] = useState<ColumnData[]>([
     { path: currentPath, files, selectedFile: null },
@@ -368,6 +369,35 @@ const ColumnView = ({
   // Re-render rows when folder colors change (rows are React.memo'd).
   const [folderColorVersion, setFolderColorVersion] = useState(0);
   useWindowEvent('folder-colors-changed', () => setFolderColorVersion((v) => v + 1));
+
+  // Keep a ref to the latest columns for async reloads triggered by file changes.
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
+
+  // Reload deeper columns when files change (e.g. a new folder was created in
+  // one of them). The root column stays in sync via the props effect below.
+  useWindowEvent('files-changed', () => {
+    const current = columnsRef.current;
+    if (current.length <= 1) return;
+    void Promise.all(
+      current.map(async (col, index) => {
+        if (index === 0) return col.files;
+        try {
+          return await TauriAPI.readDirectory(col.path);
+        } catch {
+          return col.files;
+        }
+      }),
+    ).then((reloaded) => {
+      setColumns((prev) => {
+        // Bail out if the user drilled/changed columns while reloading.
+        if (prev.length !== reloaded.length) return prev;
+        return prev.map((col, index) =>
+          index === 0 ? col : { ...col, files: reloaded[index] },
+        );
+      });
+    });
+  });
 
   useEffect(() => {
     setColumns([{ path: currentPath, files, selectedFile: null }]);
@@ -384,6 +414,13 @@ const ColumnView = ({
       return updated;
     });
   }, [files, currentPath]);
+
+  // Report the deepest column's directory so the address bar and folder
+  // creation follow the active column (drilling in never changes the root).
+  useEffect(() => {
+    const deepest = columns[columns.length - 1]?.path;
+    if (deepest) onActiveDirChange?.(deepest);
+  }, [columns, onActiveDirChange]);
 
   const handleColumnFileClick = useCallback(
     async (file: FileEntry, columnIndex: number, event: React.MouseEvent) => {

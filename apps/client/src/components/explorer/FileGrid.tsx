@@ -54,6 +54,8 @@ interface FileGridProps {
   setRenamingPath?: (path: string | null) => void;
   /** Active type-to-filter query, used to highlight matching letters in names. */
   filterQuery?: string;
+  /** Column view: report the directory shown in the deepest column. */
+  onColumnActiveDirChange?: (dir: string) => void;
 }
 
 const FileGrid = ({
@@ -83,6 +85,7 @@ const FileGrid = ({
   renamingPath: externalRenamingPath,
   setRenamingPath: externalSetRenamingPath,
   filterQuery,
+  onColumnActiveDirChange,
 }: FileGridProps) => {
   const { t } = useTranslation();
 
@@ -545,6 +548,7 @@ const FileGrid = ({
     onRenameConfirm: handleRenameConfirm,
     onRenameCancel: handleRenameCancel,
     onRenameTab: handleRenameTab,
+    onActiveDirChange: onColumnActiveDirChange,
   };
 
   if (viewMode === 'tree') {

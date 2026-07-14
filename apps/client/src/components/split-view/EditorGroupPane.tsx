@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TauriAPI, type FileEntry } from '@/lib/tauri-api';
 import { sortFiles, groupFilesByDate, type FileGroup, type SortField } from '@/lib/utils';
@@ -33,7 +33,7 @@ export interface SharedPaneActions {
   // File operations
   handleFileOpen: (file: FileEntry) => void;
   handleFileRightClick: (file: FileEntry, event: React.MouseEvent, groupId: string) => void;
-  handleBackgroundRightClick: (event: React.MouseEvent, groupId: string) => void;
+  handleBackgroundRightClick: (event: React.MouseEvent, groupId: string, dirOverride?: string) => void;
   handleDelete: (selectedFiles: Set<string>, refetch: () => void) => void;
   handleCreateFolder: (currentPath: string, refetch: () => void) => void;
   /** Open a folder in a new tab (reuses the context-menu "Open in new tab" action). */
@@ -204,6 +204,16 @@ const EditorGroupPane = ({
   const localSortOrder = folderSettings.sortOrder;
   const _localSetSortOrder = folderSettings.setSortOrder;
   const { groupByDate, setGroupByDate, toggleSortOrder } = folderSettings;
+
+  // Column view: the deepest column's directory acts as the "active" directory
+  // for the address bar and folder creation, without changing the pane's root
+  // path. Reset whenever the root path or the view mode changes.
+  const [columnActiveDir, setColumnActiveDir] = useState<string | null>(null);
+  useEffect(() => {
+    setColumnActiveDir(null);
+  }, [currentPath, localViewMode]);
+  const effectiveDir =
+    localViewMode === 'column' ? (columnActiveDir ?? currentPath) : currentPath;
 
   // Detect collection paths
   const isCollectionPath = currentPath.startsWith('collection://');
@@ -437,9 +447,9 @@ const EditorGroupPane = ({
   // Background right-click adapter
   const onBgRightClick = useCallback(
     (event: React.MouseEvent) => {
-      handleBackgroundRightClick(event, group.id);
+      handleBackgroundRightClick(event, group.id, effectiveDir);
     },
-    [group.id, handleBackgroundRightClick],
+    [group.id, handleBackgroundRightClick, effectiveDir],
   );
 
   // ── Pane sync navigation ─────────────────────────────────────────────────
@@ -625,7 +635,7 @@ const EditorGroupPane = ({
         setSelectedFiles={setSelectedFiles}
         currentPath={currentPath}
         groupId={group.id}
-        handleCreateFolder={() => handleCreateFolder(currentPath, refetch)}
+        handleCreateFolder={() => handleCreateFolder(effectiveDir, refetch)}
         handleDelete={() => handleDelete(selectedFiles, refetch)}
         handleFileClick={handleFileClick}
         handleFileDoubleClick={handleFileDoubleClick}
@@ -640,6 +650,7 @@ const EditorGroupPane = ({
         onAdvancedSelection={onAdvancedSelection}
         onQuickLook={onQuickLook}
         onRenameFile={renameFileInline}
+        onColumnActiveDirChange={setColumnActiveDir}
       />
     );
   };
@@ -719,7 +730,7 @@ const EditorGroupPane = ({
       {/* Navigation / Address Bar */}
       {!isEditorTab && (
         <NavigationBar
-          currentPath={currentPath}
+          currentPath={effectiveDir}
           navigateToPath={sharedActions.navigateToPath}
           refetch={refetch}
         />

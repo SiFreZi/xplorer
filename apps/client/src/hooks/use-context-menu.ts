@@ -67,16 +67,17 @@ export const useContextMenu = (deps: UseContextMenuDeps) => {
 
   // Background right-click (empty space)
   const handleBackgroundRightClick = useCallback(
-    (event: React.MouseEvent) => {
+    (event: React.MouseEvent, dirOverride?: string) => {
       event.preventDefault();
       event.stopPropagation();
       setContextMenuFile(null);
 
+      const targetPath = dirOverride ?? currentPath;
       const baseMenuItems = contextMenuFactoryRef.current.getEmptySpaceContextMenu(
-        currentPath,
+        targetPath,
         clipboard,
       );
-      const extensionItems = contextMenuRegistry.getEmptySpaceActions(currentPath);
+      const extensionItems = contextMenuRegistry.getEmptySpaceActions(targetPath);
       const allMenuItems = [...baseMenuItems];
       if (extensionItems.length > 0) {
         allMenuItems.push({ id: 'sep-extensions', label: '', separator: true });
