@@ -1,4 +1,4 @@
-import React, { useMemo, useSyncExternalStore } from 'react';
+import React, { useMemo, useState, useSyncExternalStore } from 'react';
 import { useLocation } from 'wouter';
 import { extensionHost } from '@/lib/extension-host';
 import {
@@ -10,8 +10,15 @@ import {
   ShoppingCart,
   Settings,
   Activity,
+  Check,
 } from 'lucide-react';
 import AgentStatusIndicator from '@/components/panels/agent-manager/AgentStatusIndicator';
+import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
+import {
+  useHiddenPanelIcons,
+  togglePanelIcon,
+  showAllPanelIcons,
+} from '@/lib/panel-icon-visibility';
 
 interface VerticalExtensionsBarProps {
   rightPanelTab: string;
@@ -29,6 +36,8 @@ const VerticalExtensionsBar = ({
   'data-tour': dataTour,
 }: VerticalExtensionsBarProps) => {
   const [, setLocation] = useLocation();
+  const hiddenIcons = useHiddenPanelIcons();
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   // useSyncExternalStore ensures re-renders when extension host state changes
   const extRefreshKey = useSyncExternalStore(
@@ -77,6 +86,34 @@ const VerticalExtensionsBar = ({
     }
   };
 
+  // Build the show/hide context menu from every toggleable panel icon.
+  const togglablePanels = [
+    ...corePanels.map((p) => ({ id: p.id, label: p.label })),
+    ...registeredPanels.map((p) => ({ id: p.id, label: p.title })),
+    ...systemPanels.map((p) => ({ id: p.id, label: p.label })),
+  ];
+
+  const menuItems: ContextMenuItem[] = [
+    ...togglablePanels.map((p) => ({
+      id: `toggle-${p.id}`,
+      label: p.label,
+      icon: hiddenIcons.has(p.id) ? undefined : <Check size={14} className="inline-block" />,
+      action: () => togglePanelIcon(p.id),
+    })),
+    { id: 'panel-icons-sep', label: '', separator: true },
+    {
+      id: 'panel-icons-show-all',
+      label: 'Show all icons',
+      disabled: hiddenIcons.size === 0,
+      action: () => showAllPanelIcons(),
+    },
+  ];
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
   const btnClass = (id: string) =>
     `w-10 h-10 mx-1 mb-1 rounded flex items-center justify-center text-lg transition-colors ${
       rightPanelTab === id && !rightSidebarCollapsed
@@ -88,49 +125,56 @@ const VerticalExtensionsBar = ({
     <div
       data-tour={dataTour}
       className="bg-xp-surface border-xp-border flex w-12 flex-col border-l"
+      onContextMenu={handleContextMenu}
     >
       <div className="flex flex-col py-2">
         {/* Core panels (always available) */}
-        {corePanels.map(({ id, icon, label }) => (
-          <button
-            key={id}
-            onClick={() => handlePanelClick(id)}
-            className={btnClass(id)}
-            title={label}
-          >
-            {icon}
-          </button>
-        ))}
+        {corePanels
+          .filter(({ id }) => !hiddenIcons.has(id))
+          .map(({ id, icon, label }) => (
+            <button
+              key={id}
+              onClick={() => handlePanelClick(id)}
+              className={btnClass(id)}
+              title={label}
+            >
+              {icon}
+            </button>
+          ))}
 
         {/* Separator between core and extension panels */}
         {registeredPanels.length > 0 && <div className="border-xp-border mx-2 my-1 border-t" />}
 
         {/* Extension-managed panel icons */}
-        {registeredPanels.map((panel) => (
-          <button
-            key={panel.id}
-            onClick={() => handlePanelClick(panel.id)}
-            className={btnClass(panel.id)}
-            title={panel.title}
-          >
-            {panel.icon}
-          </button>
-        ))}
+        {registeredPanels
+          .filter((panel) => !hiddenIcons.has(panel.id))
+          .map((panel) => (
+            <button
+              key={panel.id}
+              onClick={() => handlePanelClick(panel.id)}
+              className={btnClass(panel.id)}
+              title={panel.title}
+            >
+              {panel.icon}
+            </button>
+          ))}
 
         {/* Separator before system panels */}
         <div className="border-xp-border mx-2 my-1 border-t" />
 
         {/* System panels */}
-        {systemPanels.map(({ id, icon, label }) => (
-          <button
-            key={id}
-            onClick={() => handlePanelClick(id)}
-            className={btnClass(id)}
-            title={label}
-          >
-            {icon}
-          </button>
-        ))}
+        {systemPanels
+          .filter(({ id }) => !hiddenIcons.has(id))
+          .map(({ id, icon, label }) => (
+            <button
+              key={id}
+              onClick={() => handlePanelClick(id)}
+              className={btnClass(id)}
+              title={label}
+            >
+              {icon}
+            </button>
+          ))}
       </div>
 
       {/* Spacer */}
@@ -146,6 +190,16 @@ const VerticalExtensionsBar = ({
           <Settings size={18} />
         </button>
       </div>
+
+      {menuPos && (
+        <ContextMenu
+          isOpen
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+          items={menuItems}
+        />
+      )}
     </div>
   );
 };
