@@ -74,6 +74,8 @@ interface PaneFileExplorerProps {
   onExtract?: () => void;
   /** Optional: show properties for selected files */
   onProperties?: () => void;
+  /** Column view: report the directory shown in the deepest column. */
+  onColumnActiveDirChange?: (dir: string) => void;
 }
 
 const PaneFileExplorer = React.memo(
@@ -119,6 +121,7 @@ const PaneFileExplorer = React.memo(
     onCompress,
     onExtract,
     onProperties,
+    onColumnActiveDirChange,
   }: PaneFileExplorerProps) => {
     const [showSizeBadges, setShowSizeBadges] = useState(false);
     const toggleSizeBadges = useCallback(() => setShowSizeBadges((prev) => !prev), []);
@@ -291,6 +294,7 @@ const PaneFileExplorer = React.memo(
               showSizeBadges={showSizeBadges}
               onRenameFile={onRenameFile}
               filterQuery={filterQuery}
+              onColumnActiveDirChange={onColumnActiveDirChange}
             />
           </div>
 

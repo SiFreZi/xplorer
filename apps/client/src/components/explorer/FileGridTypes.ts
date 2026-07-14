@@ -31,6 +31,12 @@ export interface ViewComponentProps {
   onRenameCancel?: () => void;
   /** Confirm rename and advance to the next file (Tab). */
   onRenameTab?: (oldPath: string, newName: string) => void;
+  /**
+   * Column view: report the directory shown in the deepest column so the
+   * address bar and "new folder" target can follow the active column without
+   * changing the pane's root path.
+   */
+  onActiveDirChange?: (dir: string) => void;
 }
 
 export interface SizeBadgeInfo {
