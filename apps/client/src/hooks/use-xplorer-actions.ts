@@ -324,8 +324,11 @@ export const useXplorerActions = (deps: XplorerActionsDeps) => {
       },
       handleFileRightClick: (file: FileEntry, event: React.MouseEvent, _groupId: string) =>
         ctxMenuRef.current.handleFileRightClick(file, event),
-      handleBackgroundRightClick: (event: React.MouseEvent, _groupId: string, dirOverride?: string) =>
-        ctxMenuRef.current.handleBackgroundRightClick(event, dirOverride),
+      handleBackgroundRightClick: (
+        event: React.MouseEvent,
+        _groupId: string,
+        dirOverride?: string,
+      ) => ctxMenuRef.current.handleBackgroundRightClick(event, dirOverride),
       handleDelete: async (_selectedFiles: Set<string>, refetchFn: () => void) => {
         if (_selectedFiles.size === 0) return;
         const confirmed = await showConfirmationToast({

@@ -392,9 +392,7 @@ const ColumnView = ({
       setColumns((prev) => {
         // Bail out if the user drilled/changed columns while reloading.
         if (prev.length !== reloaded.length) return prev;
-        return prev.map((col, index) =>
-          index === 0 ? col : { ...col, files: reloaded[index] },
-        );
+        return prev.map((col, index) => (index === 0 ? col : { ...col, files: reloaded[index] }));
       });
     });
   });
