@@ -44,6 +44,7 @@ const SidebarQuickAccess = ({
   const { t } = useTranslation();
   const [userDirectories, setUserDirectories] = useState<UserDirectories | null>(null);
   const [iCloudPath, setICloudPath] = useState<string | null>(null);
+  const [oneDrivePath, setOneDrivePath] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -54,6 +55,10 @@ const SidebarQuickAccess = ({
           const cloudDocsPath = `${userDirs.home}/Library/Mobile Documents/com~apple~CloudDocs`;
           const exists = await TauriAPI.fileExists(cloudDocsPath);
           setICloudPath(exists ? cloudDocsPath : null);
+        }
+        if (isWindows) {
+          const odPath = await TauriAPI.getOneDrivePath();
+          setOneDrivePath(odPath);
         }
       } catch (error) {
         console.error('Failed to load user directories:', error);
@@ -161,6 +166,30 @@ const SidebarQuickAccess = ({
                 <button
                   key="icloud"
                   onClick={() => navigateToPath(iCloudPath)}
+                  className={`flex w-full items-center rounded px-2 py-1.5 text-xs transition-colors ${
+                    isActive
+                      ? 'bg-xp-blue/15 text-xp-blue'
+                      : 'hover:bg-xp-surface-light text-xp-text'
+                  }`}
+                  aria-label={t('sidebar.navigateTo', { label })}
+                >
+                  <Cloud
+                    size={15}
+                    className={`mr-2.5 flex-shrink-0 ${isActive ? 'text-xp-blue' : 'text-xp-cyan'}`}
+                    aria-hidden="true"
+                  />
+                  {label}
+                </button>
+              );
+            })()}
+          {oneDrivePath &&
+            (() => {
+              const isActive = currentPath === oneDrivePath;
+              const label = t('sidebar.oneDrive');
+              return (
+                <button
+                  key="onedrive"
+                  onClick={() => navigateToPath(oneDrivePath)}
                   className={`flex w-full items-center rounded px-2 py-1.5 text-xs transition-colors ${
                     isActive
                       ? 'bg-xp-blue/15 text-xp-blue'

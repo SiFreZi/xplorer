@@ -296,6 +296,7 @@ export class TauriAPI {
   static getAppVersion = system.getAppVersion;
   static getSystemInfo = system.getSystemInfo;
   static getUserDirectories = system.getUserDirectories;
+  static getOneDrivePath = system.getOneDrivePath;
   static getRecentFolders = system.getRecentFolders;
   static addToRecentFolders = system.addToRecentFolders;
   static listDrives = system.listDrives;

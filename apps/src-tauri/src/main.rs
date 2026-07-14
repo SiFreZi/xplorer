@@ -306,6 +306,7 @@ fn main() {
             operations::folder_ops::get_cached_folder_sizes,
             operations::folder_ops::clear_folder_size_cache,
             ai::get_user_directories,
+            ai::get_onedrive_path,
             ai::get_recent_folders,
             ai::add_to_recent_folders,
             ai::get_system_info,

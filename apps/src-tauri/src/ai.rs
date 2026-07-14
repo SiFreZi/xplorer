@@ -261,6 +261,21 @@ pub async fn get_user_directories() -> Result<UserDirectories, String> {
     })
 }
 
+/// Resolve the primary OneDrive folder on Windows via environment variables.
+/// Returns the first existing directory among `OneDrive`, `OneDriveCommercial`,
+/// and `OneDriveConsumer`, or `None` if OneDrive is not configured.
+#[command]
+pub async fn get_onedrive_path() -> Result<Option<String>, String> {
+    for var in ["OneDrive", "OneDriveCommercial", "OneDriveConsumer"] {
+        if let Ok(path) = env::var(var) {
+            if !path.is_empty() && Path::new(&path).is_dir() {
+                return Ok(Some(path));
+            }
+        }
+    }
+    Ok(None)
+}
+
 #[command]
 pub async fn get_recent_folders() -> Result<Vec<String>, String> {
     let recent_folders = RECENT_FOLDERS.lock().map_err(|e| e.to_string())?;

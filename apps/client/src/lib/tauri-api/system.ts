@@ -76,6 +76,9 @@ export const getUserDirectories = async (): Promise<{
   music: string;
 }> => await transport('get_user_directories');
 
+export const getOneDrivePath = async (): Promise<string | null> =>
+  await transport('get_onedrive_path');
+
 export const getRecentFolders = async (): Promise<string[]> =>
   await transport('get_recent_folders');
 

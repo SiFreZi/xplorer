@@ -90,6 +90,7 @@ vi.mock('@/lib/tauri-api', () => ({
     getCachedFolderSizes: vi.fn(() => Promise.resolve({})),
     clearFolderSizeCache: vi.fn(() => Promise.resolve()),
     readTextFile: vi.fn(() => Promise.resolve('')),
+    getOneDrivePath: vi.fn(() => Promise.resolve(null)),
   },
   FileEntry: {},
   FolderSizeInfo: {},

@@ -84,6 +84,7 @@ vi.mock('@/lib/tauri-api', () => ({
     getFileIcon: vi.fn(() => '📄'),
     formatFileSize: vi.fn(() => '1 KB'),
     formatDate: vi.fn(() => '2024-01-01'),
+    getOneDrivePath: vi.fn(() => Promise.resolve(null)),
   },
   FileEntry: {},
 }));
