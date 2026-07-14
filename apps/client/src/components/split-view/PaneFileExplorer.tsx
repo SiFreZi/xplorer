@@ -16,6 +16,7 @@ import FileGrid from '@/components/explorer/FileGrid';
 import TokenizerStatusIndicator from '@/components/ui/TokenizerStatusIndicator';
 import { SizeDistributionChart } from '@/components/explorer/SizeDistributionChart';
 import FolderColorLegend from '@/components/explorer/FolderColorLegend';
+import FileFilterIndicator from '@/components/explorer/FileFilterIndicator';
 import { getAllFolderColors } from '@/lib/folder-colors';
 import { useSmartView } from '@/hooks/use-smart-view';
 
@@ -31,6 +32,20 @@ interface PaneFileExplorerProps {
   sortedFiles: FileEntry[];
   fileGroups: FileGroup[] | null;
   isLoading: boolean;
+  /** Type-to-filter: current filter text (empty hides the indicator). */
+  filterQuery: string;
+  /** Number of files matching the active filter. */
+  filterMatchCount: number;
+  /** Whether recursive (subdirectory) filtering is enabled. */
+  filterRecursive: boolean;
+  /** Whether recursive filtering is supported for the current path. */
+  filterRecursiveSupported: boolean;
+  /** Whether a recursive backend search is in progress. */
+  filterIsSearching: boolean;
+  /** Toggle recursive filtering. */
+  onToggleFilterRecursive: () => void;
+  /** Clear the type-to-filter query. */
+  onClearFilter: () => void;
   selectedFiles: Set<string>;
   setSelectedFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
   currentPath: string;
@@ -74,6 +89,13 @@ const PaneFileExplorer = React.memo(
     sortedFiles,
     fileGroups,
     isLoading,
+    filterQuery,
+    filterMatchCount,
+    filterRecursive,
+    filterRecursiveSupported,
+    filterIsSearching,
+    onToggleFilterRecursive,
+    onClearFilter,
     selectedFiles,
     setSelectedFiles,
     currentPath,
@@ -243,30 +265,43 @@ const PaneFileExplorer = React.memo(
           hasClipboard={clipboardCtx.hasClipboard}
         />
 
-        <div ref={scrollContainerRef} className="flex-1 overflow-auto p-4">
-          <FileGrid
-            files={displayFiles}
-            fileGroups={colorFilter ? null : fileGroups}
-            isLoading={isLoading}
-            viewMode={viewMode}
-            selectedFiles={selectedFiles}
-            currentPath={currentPath}
-            groupId={groupId}
-            getFileIcon={getFileIcon}
-            formatFileSize={formatFileSize}
-            formatFolderSize={formatFolderSize}
-            formatDate={formatDate}
-            handleFileClick={handleFileClick}
-            handleFileDoubleClick={handleFileDoubleClick}
-            handleFileRightClick={onFileRightClick}
-            handleBackgroundRightClick={onBgRightClick}
-            openInNewTab={openInNewTab}
-            getFolderSize={getFolderSize}
-            isCalculatingSize={isCalculatingSize}
-            calculateFolderSize={calculateFolderSize}
-            onQuickLook={onQuickLook}
-            showSizeBadges={showSizeBadges}
-            onRenameFile={onRenameFile}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div ref={scrollContainerRef} className="flex-1 overflow-auto p-4">
+            <FileGrid
+              files={displayFiles}
+              fileGroups={colorFilter ? null : fileGroups}
+              isLoading={isLoading}
+              viewMode={viewMode}
+              selectedFiles={selectedFiles}
+              currentPath={currentPath}
+              groupId={groupId}
+              getFileIcon={getFileIcon}
+              formatFileSize={formatFileSize}
+              formatFolderSize={formatFolderSize}
+              formatDate={formatDate}
+              handleFileClick={handleFileClick}
+              handleFileDoubleClick={handleFileDoubleClick}
+              handleFileRightClick={onFileRightClick}
+              handleBackgroundRightClick={onBgRightClick}
+              openInNewTab={openInNewTab}
+              getFolderSize={getFolderSize}
+              isCalculatingSize={isCalculatingSize}
+              calculateFolderSize={calculateFolderSize}
+              onQuickLook={onQuickLook}
+              showSizeBadges={showSizeBadges}
+              onRenameFile={onRenameFile}
+              filterQuery={filterQuery}
+            />
+          </div>
+
+          <FileFilterIndicator
+            query={filterQuery}
+            matchCount={filterMatchCount}
+            recursive={filterRecursive}
+            recursiveSupported={filterRecursiveSupported}
+            isSearching={filterIsSearching}
+            onToggleRecursive={onToggleFilterRecursive}
+            onClear={onClearFilter}
           />
         </div>
 

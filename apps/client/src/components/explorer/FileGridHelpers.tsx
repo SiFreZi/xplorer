@@ -22,6 +22,38 @@ export const isImageFile = (file: FileEntry): boolean => {
   return IMAGE_EXTENSIONS.has(ext);
 };
 
+// ─── Filter match highlighting ───────────────────────────────────────────────
+
+/**
+ * Wrap every case-insensitive occurrence of `query` in `text` with a <mark> so the
+ * matching letters are highlighted (same idea as the search results view).
+ * Returns the plain string when there is no query or no match.
+ */
+export const highlightName = (text: string, query?: string): React.ReactNode => {
+  if (!query) return text;
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  if (!lowerText.includes(lowerQuery)) return text;
+
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  let matchStart = lowerText.indexOf(lowerQuery);
+  let key = 0;
+  while (matchStart !== -1) {
+    if (matchStart > cursor) parts.push(text.slice(cursor, matchStart));
+    const matchEnd = matchStart + lowerQuery.length;
+    parts.push(
+      <mark key={key++} className="rounded-sm bg-yellow-300/40 text-inherit">
+        {text.slice(matchStart, matchEnd)}
+      </mark>,
+    );
+    cursor = matchEnd;
+    matchStart = lowerText.indexOf(lowerQuery, cursor);
+  }
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
+};
+
 // ─── Tag dots displayed under / beside a file name ───────────────────────────
 
 export const TagDots = ({ tags }: { tags: FileTag[] }) => {
